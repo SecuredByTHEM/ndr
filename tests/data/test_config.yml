@@ -1,0 +1,14 @@
+upload_method: local
+
+upload:
+  incoming_directory: /tmp
+  enrollment_directory: /tmp
+
+nmap:
+ scan_interface: eth0
+
+ssl:
+ keyfile: /etc/ndr/cert.key
+ bundle: /etc/ndr/bundle.crt
+ certfile: /etc/ndr/cert.crt
+ csr: /etc/ndr/cert.csr

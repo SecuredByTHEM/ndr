@@ -1,0 +1,20 @@
+Source: ndr
+Section: net
+Priority: optional
+Maintainer: Michael Casadevall <mcasadevall@them.com>
+Build-Depends: debhelper (>= 10), 
+ dh-python, python3-all,
+ python3-setuptools,
+ python3-yaml,
+ python3-cryptography
+Standards-Version: 3.9.7
+Homepage: https://them.com
+
+Package: ndr
+Architecture: all
+Depends: ${python3:Depends}, ${misc:Depends}, python3-pkg-resources, uucp
+Recommends: ndr-config
+Description: Network Data Recorder
+ NDR monitors your network for intrusion attempts and can take actions.
+ Like a flight recorder, its designed to retain all data in case of network
+ failure

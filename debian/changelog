@@ -1,0 +1,53 @@
+ndr (0.7) UNRELEASED; urgency=medium
+
+  * Major code update
+  * Implement nmap scan uploading (still WIP)
+  * Change ndr to work from gnupg to S/MIME certificates
+  * Implement alert testing
+  * Change NmapPortProtocols to PortProtocols
+
+ -- Michael Casadevall <mcasadevall@them.com>  Sun, 28 May 2017 01:52:45 +0000
+
+ndr (0.6) ndr-xenial; urgency=medium
+
+  * Allow syslog-ng parsing not to self-destruct in the face of a newline (empty msg)
+  * On log upload, cataphoric errors are noted but don't cause immediate failure.
+
+ -- Michael Casadevall <mcasadevall@them.com>  Sun, 09 Apr 2017 18:37:21 -0400
+
+ndr (0.5) ndr-xenial; urgency=medium
+
+  * Add python3-pkg-resources to Depends list as python3:Depends didn't
+    catch this requirement. Required for command line tools to actually
+    work due to the way setuptools works (which makes me rethink how
+    part of this should all come together ...)
+
+ -- Michael Casadevall <mcasadevall@them.com>  Sun, 09 Apr 2017 12:34:58 -0400
+
+ndr (0.4) ndr-xenial; urgency=medium
+
+  * Fix __init__.py so it can run on the autobuilder and clear FTBFS
+
+ -- Michael Casadevall <mcasadevall@them.com>  Sat, 08 Apr 2017 19:57:00 -0400
+
+ndr (0.3) ndr-xenial; urgency=medium
+
+  * Hacky, but break out the config into its own module, and fix the downstream
+    code to handle that so we can possibly build an image in a non-braindead way
+
+ -- Michael Casadevall <mcasadevall@them.com>  Sat, 08 Apr 2017 18:33:29 -0400
+
+ndr (0.2) ndr-xenial; urgency=medium
+
+  * Add copyright file licensing us under the GPLv3
+  * Add licensing headers to the package
+  * Correct setup.py to depend on pyyaml
+  * Set default host to them-ndr
+
+ -- Michael Casadevall <mcasadevall@them.com>  Fri, 07 Apr 2017 11:55:58 -0400
+
+ndr (0.1) ndr-xenial; urgency=low
+
+  * Initial Release.
+
+ -- Michael Casadevall <mcasadevall@them.com>  Thu, 06 Apr 2017 06:21:45 -0400

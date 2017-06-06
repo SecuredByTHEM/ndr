@@ -1,0 +1,15 @@
+{"timestamp":"1491867002","program":"syslog-ng","priority":"notice","pid":339,"message":"Configuration reload request received, reloading configuration;","host":"localhost","facility":"syslog"}
+{"timestamp":"1491867002","program":"CRON","priority":"info","pid":5945,"message":"pam_unix(cron:session): session closed for user root","host":"localhost","facility":"authpriv"}
+{"timestamp":"1491867002","program":"postfix/pickup","priority":"info","pid":5925,"message":"E5F176072D: uid=0 from=<root>","host":"localhost","facility":"mail"}
+{"timestamp":"1491867002","program":"postfix/cleanup","priority":"info","pid":5996,"message":"E5F176072D: message-id=<20170410233002.E5F176072D@perdition>","host":"localhost","facility":"mail"}
+{"timestamp":"1491867002","program":"postfix/qmgr","priority":"info","pid":699,"message":"E5F176072D: from=<root@perdition>, size=701, nrcpt=1 (queue active)","host":"localhost","facility":"mail"}
+{"timestamp":"1491867002","program":"postfix/local","priority":"info","pid":5998,"message":"E5F176072D: to=<root@perdition>, orig_to=<root>, relay=local, delay=0.07, delays=0.04/0.01/0/0.01, dsn=2.0.0, status=sent (delivered to mailbox)","host":"localhost","facility":"mail"}
+{"timestamp":"1491867002","program":"postfix/qmgr","priority":"info","pid":699,"message":"E5F176072D: removed","host":"localhost","facility":"mail"}
+{"timestamp":"1491869281","program":"CRON","priority":"info","pid":6087,"message":"pam_unix(cron:session): session opened for user uucp by (uid=0)","host":"localhost","facility":"authpriv"}
+{"timestamp":"1491869281","program":"CRON","priority":"info","pid":6088,"message":"(uucp) CMD (   [ -x /usr/lib/uucp/uudemon.hr ] && /usr/lib/uucp/uudemon.hr)","host":"localhost","facility":"cron"}
+{"timestamp":"1491869282","program":"CRON","priority":"info","pid":6087,"message":"pam_unix(cron:session): session closed for user uucp","host":"localhost","facility":"authpriv"}
+{"timestamp":"1491869821","program":"CRON","priority":"info","pid":6117,"message":"pam_unix(cron:session): session opened for user root by (uid=0)","host":"localhost","facility":"authpriv"}
+{"timestamp":"1491869821","program":"CRON","priority":"info","pid":6118,"message":"(root) CMD (   cd / && run-parts --report /etc/cron.hourly)","host":"localhost","facility":"cron"}
+{"timestamp":"1491869821","program":"CRON","priority":"info","pid":6117,"message":"pam_unix(cron:session): session closed for user root","host":"localhost","facility":"authpriv"}
+{"timestamp":"1491870601","program":"CRON","priority":"info","pid":6146,"message":"pam_unix(cron:session): session opened for user root by (uid=0)","host":"localhost","facility":"authpriv"}
+{"timestamp":"1491870601","program":"CRON","priority":"info","pid":6147,"message":"(root) CMD (/usr/sbin/logrotate -f /etc/ndr/logrotate-ndr.conf )","host":"localhost","facility":"cron"}

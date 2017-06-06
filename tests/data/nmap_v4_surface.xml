@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE nmaprun>
+<?xml-stylesheet href="file:///usr/local/bin/../share/nmap/nmap.xsl" type="text/xsl"?>
+<!-- Nmap 7.40 scan initiated Thu Apr 13 01:36:53 2017 as: nmap -PR -sn -T4 -oX tests/data/test_nmap_v4_surface.xml 192.168.2.0/24 -->
+<nmaprun scanner="nmap" args="nmap -PR -sn -T4 -oX tests/data/test_nmap_v4_surface.xml 192.168.2.0/24" start="1492047413" startstr="Thu Apr 13 01:36:53 2017" version="7.40" xmloutputversion="1.04">
+<verbose level="0"/>
+<debugging level="0"/>
+<host><status state="up" reason="arp-response" reason_ttl="0"/>
+<address addr="192.168.2.1" addrtype="ipv4"/>
+<address addr="40:16:7E:6C:04:92" addrtype="mac" vendor="Asustek Computer"/>
+<hostnames>
+</hostnames>
+<times srtt="271" rttvar="5000" to="100000"/>
+</host>
+<host><status state="up" reason="arp-response" reason_ttl="0"/>
+<address addr="192.168.2.50" addrtype="ipv4"/>
+<address addr="48:45:20:E5:70:FE" addrtype="mac" vendor="Intel Corporate"/>
+<hostnames>
+</hostnames>
+<times srtt="-86359" rttvar="28967" to="100000"/>
+</host>
+<host><status state="up" reason="arp-response" reason_ttl="0"/>
+<address addr="192.168.2.100" addrtype="ipv4"/>
+<address addr="84:39:BE:64:3F:E5" addrtype="mac"/>
+<hostnames>
+</hostnames>
+<times srtt="-99642" rttvar="5000" to="100000"/>
+</host>
+<host><status state="up" reason="arp-response" reason_ttl="0"/>
+<address addr="192.168.2.247" addrtype="ipv4"/>
+<address addr="08:00:27:21:AD:D1" addrtype="mac" vendor="Oracle VirtualBox virtual NIC"/>
+<hostnames>
+</hostnames>
+<times srtt="-100406" rttvar="5000" to="100000"/>
+</host>
+<host><status state="up" reason="localhost-response" reason_ttl="0"/>
+<address addr="192.168.2.2" addrtype="ipv4"/>
+<hostnames>
+</hostnames>
+</host>
+<runstats><finished time="1492047417" timestr="Thu Apr 13 01:36:57 2017" elapsed="3.32" summary="Nmap done at Thu Apr 13 01:36:57 2017; 256 IP addresses (5 hosts up) scanned in 3.32 seconds" exit="success"/><hosts up="5" down="251" total="256"/>
+</runstats>
+</nmaprun>
