@@ -12,8 +12,8 @@ install:
 #  - pip install cryptography
 
 script:
-  - coverage run --source=ndr setup.py test
-
+#  - coverage run --source=ndr setup.py test
+  - setup.py test
 after_success:
   - codecov
 
