@@ -12,3 +12,5 @@ ssl:
  bundle: /etc/ndr/bundle.crt
  certfile: /etc/ndr/cert.crt
  csr: /etc/ndr/cert.csr
+ cafile: /etc/ndr/ca.crt
+

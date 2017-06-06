@@ -26,7 +26,6 @@ setup(
     install_requires=[
         'pyyaml',
         'cryptography',
-        'pyroute2'
     ],
     entry_points={
         'console_scripts': [

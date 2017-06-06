@@ -7,9 +7,11 @@ python:
 
 install:
   - pip install codecov
+  - pip install pyyaml
+  - pip install cryptography
 
 script:
-  - coverage run setup.py test
+  - coverage run --source=ndr setup.py test
 
 after_success:
   - codecov
