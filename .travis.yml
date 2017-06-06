@@ -13,7 +13,7 @@ install:
 
 script:
 #  - coverage run --source=ndr setup.py test
-  - setup.py test
+  - python3 setup.py test
 after_success:
   - codecov
 
