@@ -17,6 +17,7 @@
 # You should have received a copy of the GNU General Public License
 # along with NDR.  If not, see <http://www.gnu.org/licenses/>.
 
+import os
 import logging
 import logging.handlers
 
@@ -33,8 +34,11 @@ class Config:
         logger.setLevel(logging.DEBUG)
 
         logger.propagate = False
-        handler = logging.handlers.SysLogHandler(address='/dev/log')
-        logger.addHandler(handler)
+
+        # Only log to syslog if the socket exists (resolves build in chroot issue)
+        if os.path.exists("/dev/log"):
+            handler = logging.handlers.SysLogHandler(address='/dev/log')
+            logger.addHandler(handler)
 
         self.logger = logger
 
