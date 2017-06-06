@@ -7,8 +7,9 @@ python:
 
 install:
   - pip install codecov
-  - pip install pyyaml
-  - pip install cryptography
+  - pip install coverage
+#  - pip install pyyaml
+#  - pip install cryptography
 
 script:
   - coverage run --source=ndr setup.py test
