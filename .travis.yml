@@ -1,3 +1,4 @@
+dist: trusty
 sudo: false
 
 language: python
@@ -7,12 +8,13 @@ python:
 
 install:
   - pip install codecov
-  - pip install pyyaml
-  - pip install cryptography
+  - pip install coverage
+#  - pip install pyyaml
+#  - pip install cryptography
 
 script:
-  - coverage run --source=ndr setup.py test
-
+#  - coverage run --source=ndr setup.py test
+  - python3 setup.py test
 after_success:
   - codecov
 
