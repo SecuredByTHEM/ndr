@@ -18,6 +18,7 @@
 # along with NDR.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
+import socket
 import logging
 import logging.handlers
 
@@ -41,6 +42,12 @@ class Config:
             logger.addHandler(handler)
 
         self.logger = logger
+
+        # Allow for overriding the hostname in the client configuration
+        if 'hostname' in config_dict:
+            self.hostname = config_dict['hostname']
+        else:
+            self.hostname = socket.gethostname()
 
         self.ssl_private_key = config_dict['ssl']['keyfile']
         self.ssl_bundle = config_dict['ssl']['bundle']

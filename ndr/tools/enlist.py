@@ -50,7 +50,7 @@ def main():
     #net_config.interactive_configuration()
     #return
 
-    hostname = socket.gethostname()
+    hostname = config.hostname
     print("Hostname: ", hostname)
 
     # Print out some helpful messages, then ask questions
