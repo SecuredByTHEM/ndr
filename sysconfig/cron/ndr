@@ -5,4 +5,4 @@ PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
 # you stagger the run.
 # min        hour         day mon wday user     cmd
 # Process the master system control tab
-30 * * * *	root	/usr/sbin/logrotate -f /etc/ndr/logrotate-ndr.conf 
+30 * * * *	root	/usr/sbin/logrotate -f /etc/logrotate.d/ndr
