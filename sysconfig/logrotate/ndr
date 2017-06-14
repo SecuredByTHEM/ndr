@@ -1,0 +1,14 @@
+su root syslog
+create
+/var/log/syslog.json
+{
+        rotate 4
+        hourly
+        missingok
+        delaycompress
+        compress
+        postrotate
+                invoke-rc.d syslog-ng reload > /dev/null
+                ndr-syslog-uploader /var/log/syslog.json.1
+        endscript
+}
