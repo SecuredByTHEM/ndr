@@ -246,7 +246,7 @@ class IngestMessage:
 
                 # Glue the destination path to the command
                 uux_path = self.destination + "!ndr-process-message"
-                uux_command = ["/usr/bin/uux", uux_path, "!" + uucp_upload]
+                uux_command = ["/usr/bin/uux", "-C", uux_path, "!" + uucp_upload]
                 logging.warn("UUX command: %s", ' '.join(uux_command))
 
                 uux_proc = subprocess.run(
