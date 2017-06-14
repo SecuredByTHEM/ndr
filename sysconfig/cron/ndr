@@ -1,0 +1,8 @@
+SHELL=/bin/sh
+PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
+# Master cron file for all NDR related activites
+# For anything that will generate network noise, make sure
+# you stagger the run.
+# min        hour         day mon wday user     cmd
+# Process the master system control tab
+30 * * * *	root	/usr/sbin/logrotate -f /etc/ndr/logrotate-ndr.conf 
