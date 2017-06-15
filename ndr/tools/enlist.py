@@ -46,26 +46,22 @@ def main():
         print("ERROR: This utility must be run as root!")
         sys.exit(-1)
 
-    #net_config = NetworkConfiguration(config)
-    #net_config.interactive_configuration()
-    #return
-
     hostname = config.hostname
     print("Hostname: ", hostname)
 
     # Print out some helpful messages, then ask questions
     print('''
-This script will automatically generate a certificate signing request\n
-and other security keys for this recorder. The information used in the CSR\n
-will be used to create an organization and site if necessary, and the pseudonym\n
-will become the default human readable name used to refer to this recorder.\n
-\n
-Manual processing of the CSR is required server side. After uploading the CSR,\n
-we'll poll to wait for the CSR to be signed and downloaded. If you don't wish to\n
-enlist this recorder now, press Ctrl-C\n
-\n
-NOTE: Names are case sensitive!\n
-\n''')
+This script will automatically generate a certificate signing request
+and other security keys for this recorder. The information used in the CSR
+will be used to create an organization and site if necessary, and the pseudonym
+will become the default human readable name used to refer to this recorder.
+
+Manual processing of the CSR is required server side. After uploading the CSR,
+we'll poll to wait for the CSR to be signed and downloaded. If you don't wish to
+enlist this recorder now, press Ctrl-C
+
+NOTE: Names are case sensitive!
+''')
 
     got_info = False
     while got_info is False:
