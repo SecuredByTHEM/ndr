@@ -330,6 +330,7 @@ class IngestMessageTypes(Enum):
     SNORT_TRAFFIC = "snort_traffic"
     NMAP_SCAN = "nmap_scan"
     TEST_ALERT = "test_alert"
+    REBOOT_REQUEST = "reboot_request"
 
 
 class IngestMessageDestinations(Enum):
