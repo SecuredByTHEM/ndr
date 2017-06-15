@@ -89,6 +89,18 @@ def main():
                         f.write(cert_request_msg.certificate_chain)
                 logger.info("Updated certificate chain for device")
 
+            elif message.message_type == ndr.IngestMessageTypes.REBOOT_REQUEST:
+                logger.info("Got a reboot request")
+                shutdown_args = [ "shutdown", "-r", "now"]
+
+                shutdown_process = subprocess.run(
+                    args=shutdown_args, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                    check=False)
+
+                if shutdown_process.returncode != 0:
+                    logger.error("shutdown failed: %s", str(shutdown_process.stderr, 'utf-8'))
+                    return
+
             else:
                 logger.error("Got non-client accepted %s message", message.message_type.value)
         else:
