@@ -15,7 +15,6 @@
 # along with NDR.  If not, see <http://www.gnu.org/licenses/>.
 
 import csv
-import logging
 import argparse
 import os
 import sys
@@ -51,10 +50,6 @@ def parse_log(logger, traffic_log, logfile):
         pass
 
 def main():
-    logging.basicConfig(format='%(asctime)s %(levelname)s %(message)s')
-    logger = logging.getLogger(name=__name__)
-    logger.setLevel(logging.DEBUG)
-
     parser = argparse.ArgumentParser(
         description="Uploads SNORT all-traffic CSV files. If directory is specified, all files in that directory")
     parser.add_argument('-f', "--filename", default='log.csv', help='base name of the log file to upload')
@@ -65,6 +60,7 @@ def main():
     ndr_config = ndr.Config('/etc/ndr/config.yml')
 
     snort_traffic_log = ndr.SnortTrafficLog(ndr_config)
+    logger = ndr_config.logger
 
     for logpath in args.logs:
         if os.path.isfile(logpath):

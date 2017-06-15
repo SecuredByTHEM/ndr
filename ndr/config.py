@@ -18,6 +18,7 @@
 # along with NDR.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
+import sys
 import socket
 import logging
 import logging.handlers
@@ -39,6 +40,7 @@ class Config:
         # Only log to syslog if the socket exists (resolves build in chroot issue)
         if os.path.exists("/dev/log"):
             handler = logging.handlers.SysLogHandler(address='/dev/log')
+            handler.ident = os.path.basename(sys.argv[0])
             logger.addHandler(handler)
 
         self.logger = logger

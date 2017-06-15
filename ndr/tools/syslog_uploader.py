@@ -15,7 +15,6 @@
 # along with NDR.  If not, see <http://www.gnu.org/licenses/>.
 # pylint: disable=C0103
 
-import logging
 import sys
 import argparse
 import yaml
@@ -24,10 +23,6 @@ import ndr
 from ndr import SyslogUploadMessage, SyslogEntry
 
 def main():
-    logging.basicConfig(format='%(asctime)s %(levelname)s %(message)s')
-    logger = logging.getLogger(name=__name__)
-    logger.setLevel(logging.DEBUG)
-
     # Get our list of log files
     parser = argparse.ArgumentParser(
         description="Upload a JSON-formatted syslog file for processing")
@@ -36,6 +31,7 @@ def main():
     args = parser.parse_args()
 
     ndr_config = ndr.Config('/etc/ndr/config.yml')
+    logger = ndr_config.logger
 
     # This is slagging ugly. Nothing stops us from getting
     # a bad file in so we need to handle that case, and then
