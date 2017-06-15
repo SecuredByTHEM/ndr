@@ -40,7 +40,7 @@ class Config:
         # Only log to syslog if the socket exists (resolves build in chroot issue)
         if os.path.exists("/dev/log"):
             handler = logging.handlers.SysLogHandler(address='/dev/log')
-            handler.ident = os.path.basename(sys.argv[0])
+            handler.ident = os.path.basename(sys.argv[0]) + " " # space required for syslog
             logger.addHandler(handler)
 
         self.logger = logger
