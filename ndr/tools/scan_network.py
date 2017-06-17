@@ -15,40 +15,31 @@
 # along with NDR.  If not, see <http://www.gnu.org/licenses/>.
 
 import argparse
+import os
+
 import ndr
 
-def run_scans(ndr_config):
-    network = "192.168.2.0/24" # FIXME: dehardcode
-
-    # Do host detection passes first to determine what we're scanning
-    nmap_runner = ndr.NmapRunner(ndr_config, ndr_config.nmap_scan_interface)
-
-    return nmap_runner.scan(ndr.NmapScanTypes.SERVICE_DISCOVERY, "-sS -A -T4", network)
-
-def scan_main(args, ndr_config):
-    '''Scans the network'''
-    host_scan = run_scans(ndr_config)
-    host_scan.sign_report()
-    host_scan.load_into_queue()
-
 def main():
-    # Parse the command line and then select the correct mode of operation
+    '''Starts the scan network'''
     parser = argparse.ArgumentParser(
-        description="Network Scanner")
-    parser.add_argument('--interface', help='interface to scan on')
-
-    subparsers = parser.add_subparsers(help='commands help', dest='command')
-    subparsers.required = True
-
-    scan_parser = subparsers.add_parser('scan', help='scan help')
-    scan_parser.set_defaults(func=scan_main)
+        description="Intelligently scans the network with NMAP")
+    parser.add_argument('--net-config',
+                        default='/persistant/etc/ndr/network_config.yml',
+                        help='Network Configuration File')
 
     # Load in the NDR configuration
-    ndr_config = ndr.Config('/etc/ndr/config.yml')
-
-    # Handle the operation modes
     args = parser.parse_args()
-    args.func(args, ndr_config.logger, ndr_config)
+
+    if os.getuid() != 0:
+        print("ERROR: must be run as root")
+        return
+
+    # We need the NDR Network config for this scan
+    ndr_config = ndr.Config('/etc/ndr/config.yml')
+    nmap_config = ndr.NmapConfig(args.net_config)
+    nmap_runner = ndr.NmapRunner(ndr_config, nmap_config)
+
+    nmap_runner.run_network_scans()
 
 if __name__ == "__main__":
     main()

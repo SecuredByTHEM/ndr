@@ -990,12 +990,3 @@ class NmapServiceMethods(Enum):
     '''Method on how services were probed by NMAP'''
     TABLE = "table"
     PROBED = "probed"
-
-class NmapScanTypes(Enum):
-
-    '''Types of scans we do with NMAP'''
-    ARP_DISCOVERY = "arp-discovery"
-    IPV6_LINK_LOCAL_DISCOVERY = 'ipv6-link-local-discovery'
-    IP_PROTOCOL_DETECTION = "ip-protocol-detection"
-    PORT_SCAN = "port-scan"
-    SERVICE_DISCOVERY = "service-discovery"

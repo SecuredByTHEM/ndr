@@ -21,6 +21,9 @@
 import tempfile
 import subprocess
 import os
+import ipaddress
+
+from enum import Enum
 
 import ndr
 import ndr_netcfg
@@ -58,14 +61,12 @@ class NmapRunner(object):
         self.config = config
         self.nmap_config = nmap_config
 
-    def scan(self, scan_type, options, networks):
+    def run_scan(self, scan_type, options, networks):
         '''Does a IPv4 network scan'''
 
         xml_logfile = tempfile.mkstemp()
 
         # Invoke NMAP
-        self.config.logger.info("== Running NMap Network Scan ==")
-
         self.config.logger.debug("Scanning Networks: %s", networks)
         self.config.logger.debug("Options: %s", options)
 
@@ -92,7 +93,7 @@ class NmapRunner(object):
         os.remove(xml_logfile[1])
 
         # Build a scan object and return it
-        nmap_scan = NmapScan(config=self.config)
+        nmap_scan = ndr.NmapScan(config=self.config)
         nmap_scan.parse_nmap_xml(xml_output)
         nmap_scan.scan_type = scan_type
 
@@ -100,11 +101,11 @@ class NmapRunner(object):
 
     def arp_host_discovery_scan(self, network):
         '''Performs a surface scan on the network'''
-        return self.scan(NmapScanTypes.ARP_DISCOVERY, "-sn -PR", network)
+        return self.run_scan(NmapScanTypes.ARP_DISCOVERY, "-sn -PR", network)
 
     def v6_link_local_scan(self, interface):
         '''Performs a link-local scan'''
-        return self.scan(NmapScanTypes.IPV6_LINK_LOCAL_DISCOVERY, "-6 -sn -e %s --script=targets-ipv6-multicast-* --script-args=newtargets"
+        return self.run_scan(NmapScanTypes.IPV6_LINK_LOCAL_DISCOVERY, "-6 -sn -e %s --script=targets-ipv6-multicast-* --script-args=newtargets"
                          % (interface), "")
 
     def basic_host_scan(self, address):
@@ -114,7 +115,7 @@ class NmapRunner(object):
         # 1. If we're v6 address or range, we need -6
         # 2. If we're link-local, we need to specify the interface
 
-        return self.scan(NmapScanTypes.PORT_SCAN, "-sS", address)
+        return self.run_scan(NmapScanTypes.PORT_SCAN, "-sS", address)
 
     def indepth_host_scan(self, address, interface):
         '''Does a full discovery scan'''
@@ -127,4 +128,25 @@ class NmapRunner(object):
             options = "-6 " + options
         if ipaddr.is_link_local:
             options = "-e " + interface + " " + options
-        return self.scan(NmapScanTypes.SERVICE_DISCOVERY, options, str(address))
+        return self.run_scan(NmapScanTypes.SERVICE_DISCOVERY, options, str(address))
+
+    def run_network_scans(self):
+        '''Runs a scan of a network and builds an iterative map of the network based on the results'''
+
+        # During NMAP scanning, we will run this in multiple stages to determine what, if anything
+        # if on the network, and then do additional scans beyond that point based on the data we
+        # detect and determine. By default, we only scan the L2 segment we're on.
+
+        logger = self.config.logger
+        # First we need to generate a list of everything we can detect link local
+        logger.info("== Running NMap Network Scan ==")
+        logger.info("Phase 1: Link-Local Discovery")
+
+class NmapScanTypes(Enum):
+
+    '''Types of scans we do with NMAP'''
+    ARP_DISCOVERY = "arp-discovery"
+    IPV6_LINK_LOCAL_DISCOVERY = 'ipv6-link-local-discovery'
+    IP_PROTOCOL_DETECTION = "ip-protocol-detection"
+    PORT_SCAN = "port-scan"
+    SERVICE_DISCOVERY = "service-discovery"

@@ -38,8 +38,7 @@ from ndr.nmap import (NmapHost,
                       NmapOsMatch,
                       NmapOsClass,
                       NmapReasons,
-                      NmapScanTypes
                      )
-from ndr.nmap_runner import NmapRunner, NmapConfig
+from ndr.nmap_runner import NmapRunner, NmapConfig, NmapScanTypes
 from ndr.snort_traffic import SnortTrafficLog, SnortTrafficEntry
 from ndr.cert_request import CertificateRequest, CertificateRequestTypes
