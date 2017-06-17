@@ -22,12 +22,6 @@ def run_scans(ndr_config):
 
     # Do host detection passes first to determine what we're scanning
     nmap_runner = ndr.NmapRunner(ndr_config, ndr_config.nmap_scan_interface)
-#    host_scan = nmap_runner.arp_host_discovery_scan(network)
-#    host_scan.merge(nmap_runner.v6_link_local_scan())
-
-#    ips_to_scan = host_scan.full_ip_list()
-#    for ipaddr in ips_to_scan:
-#       host_scan.merge(nmap_runner.indepth_host_scan(ipaddr))
 
     return nmap_runner.scan(ndr.NmapScanTypes.SERVICE_DISCOVERY, "-sS -A -T4", network)
 
