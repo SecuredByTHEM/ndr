@@ -26,6 +26,8 @@ import logging.handlers
 import yaml
 
 class Config:
+    '''Handles global configuration information for NDR'''
+
     def __init__(self, yaml_file):
         '''Loads and initializes the client configuration class'''
         with open(yaml_file, 'r') as f:
@@ -35,7 +37,7 @@ class Config:
         logger = logging.getLogger(name=__name__)
         logger.setLevel(logging.DEBUG)
 
-        logger.propagate = False
+        #logger.propagate = False
 
         # Only log to syslog if the socket exists (resolves build in chroot issue)
         if os.path.exists("/dev/log"):

@@ -22,7 +22,7 @@ import os
 import tempfile
 import ipaddress
 
-from pyroute2 import IPRoute
+from pyroute2 import IPRoute # pylint: disable=E0611
 
 import ndr
 import ndr_netcfg
