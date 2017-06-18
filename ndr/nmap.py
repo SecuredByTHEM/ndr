@@ -44,10 +44,7 @@ send a bug with the NMAP XML output and let me know!
 '''
 
 # pylint: disable=too-few-public-methods
-import os
 import ipaddress
-import tempfile
-import subprocess
 import xml.etree.ElementTree as ET
 from enum import Enum
 
@@ -119,7 +116,7 @@ class NmapScan(ndr.IngestMessage):
 
     def from_dict(self, scan_dict):
         '''Loads the scan results from dictionary form'''
-        self.scan_type = NmapScanTypes(scan_dict['scan_type'])
+        self.scan_type = ndr.NmapScanTypes(scan_dict['scan_type'])
         for host in scan_dict['hosts']:
             self.hosts.add(NmapHost.from_dict(host))
 
@@ -172,9 +169,7 @@ class NmapScan(ndr.IngestMessage):
 
         full_ip_list = []
         for host in self.hosts:
-            for address in host.addresses:
-                if address.addrtype == NmapAddrTypes.IPV4 or address.addrtype == NmapAddrTypes.IPV6:
-                    full_ip_list.append(address.addr)
+            full_ip_list.append(host.addr)
 
         return full_ip_list
 
@@ -956,7 +951,7 @@ class NmapReasons(Enum):
     BEYOND_SCOPE = "beyond-scope"
     REJECT_ROUTE = "reject-route"
     PARAMETER_PROBLEM = "param-problem"
-
+    PORT_UNREACHABLE = "port-unreach"
 
 class NmapAddrTypes(Enum):
 

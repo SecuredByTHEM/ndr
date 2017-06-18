@@ -14,6 +14,9 @@
 # You should have received a copy of the GNU General Public License
 # along with NDR.  If not, see <http://www.gnu.org/licenses/>.
 
+'''Loads the NDR network configuration for NMAP and automatically runs through the test cases
+as defined in nmap_runner.py'''
+
 import argparse
 import os
 
