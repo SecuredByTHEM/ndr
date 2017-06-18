@@ -9,9 +9,8 @@ python:
 install:
   - pip install codecov
   - pip install coverage
-  - source ~/virtualenv/python3.5/bin/activate
-  - git clone https://github.com/SecuredByTHEM/ndr-netcfg.git
-  - cd ndr-netcfg && ./setup.py install && cd ../
+  - pip install setuptools
+  - /bin/bash -c "source ~/virtualenv/python3.5/bin/activate && git clone https://github.com/SecuredByTHEM/ndr-netcfg.git && cd ndr-netcfg && ./setup.py install"
 
 script:
   - coverage run --source=ndr setup.py test
