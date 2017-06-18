@@ -9,6 +9,8 @@ python:
 install:
   - pip install codecov
   - pip install coverage
+  - git clone https://github.com/SecuredByTHEM/ndr-netcfg.git
+  - cd ndr-netcfg && ./setup.py install && cd ../
 
 script:
   - coverage run --source=ndr setup.py test
