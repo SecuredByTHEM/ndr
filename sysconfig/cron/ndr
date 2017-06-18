@@ -6,3 +6,4 @@ PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
 # min        hour         day mon wday user     cmd
 # Process the master system control tab
 30 * * * *	root	/usr/sbin/logrotate -f /etc/logrotate.d/ndr
+45 * * * *	root	ndr-scan-network
