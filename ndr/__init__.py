@@ -25,8 +25,7 @@ from ndr.config import Config
 from ndr.ingest_message import IngestMessage, IngestMessageTypes, IngestMessageDestinations
 from ndr.syslog import SyslogEntry, SyslogFacilities, SyslogPriorities, SyslogUploadMessage
 from ndr.exception import NdrExpection, NmapFailure
-from ndr.nmap import (NmapRunner,
-                      NmapHost,
+from ndr.nmap import (NmapHost,
                       NmapScan,
                       NmapHostname,
                       NmapAddrTypes,
@@ -39,7 +38,7 @@ from ndr.nmap import (NmapRunner,
                       NmapOsMatch,
                       NmapOsClass,
                       NmapReasons,
-                      NmapScanTypes
                      )
+from ndr.nmap_runner import NmapRunner, NmapConfig, NmapScanTypes
 from ndr.snort_traffic import SnortTrafficLog, SnortTrafficEntry
 from ndr.cert_request import CertificateRequest, CertificateRequestTypes

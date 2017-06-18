@@ -24,8 +24,12 @@ setup(
     version="0.1",
     packages=find_packages(exclude=("tests",)),
     install_requires=[
+        'ndr-netcfg',
         'pyyaml',
-        'cryptography',
+        'cryptography'
+    ],
+    tests_require=[
+        'pyroute2'
     ],
     entry_points={
         'console_scripts': [
