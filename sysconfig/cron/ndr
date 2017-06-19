@@ -1,5 +1,7 @@
 SHELL=/bin/sh
 PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
+MAILTO=""
+
 # Master cron file for all NDR related activites
 # For anything that will generate network noise, make sure
 # you stagger the run.
