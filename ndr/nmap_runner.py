@@ -61,13 +61,13 @@ class NmapRunner(object):
         self.config = config
         self.nmap_config = nmap_config
 
-    def run_scan(self, scan_type, options, networks):
+    def run_scan(self, scan_type, options, target):
         '''Does a IPv4 network scan'''
 
         xml_logfile = tempfile.mkstemp()
 
         # Invoke NMAP
-        self.config.logger.debug("Scanning Networks: %s", networks)
+        self.config.logger.debug("Scanning Target: %s", target)
         self.config.logger.debug("Options: %s", options)
 
         # Build the full nmap command line
@@ -77,8 +77,8 @@ class NmapRunner(object):
         # Build in XML output
         nmap_cmd += ["-oX", xml_logfile[1]]
 
-        if networks is not None:
-            nmap_cmd += [networks.compressed]
+        if target is not None:
+            nmap_cmd += [target.compressed]
 
         self.config.logger.debug("NMap Command: %s", ' '.join(nmap_cmd))
 
@@ -99,6 +99,10 @@ class NmapRunner(object):
         nmap_scan.parse_nmap_xml(xml_output)
         nmap_scan.scan_type = scan_type
 
+        # Scan targets MUST be in CIDR form, so convert the target to a ipnetwork
+        if target is not None:
+            target_net = ipaddress.ip_network(target.compressed)
+            nmap_scan.scan_target = target_net.compressed
         return nmap_scan
 
     def arp_host_discovery_scan(self, network):

@@ -32,6 +32,9 @@ TEST_HOSTNAME_SCAN_DATA = THIS_DIR + '/data/nmap_hostname_test.xml'
 TEST_SD_SCAN_DATA = THIS_DIR + '/data/nmap_service_discovery.xml'
 TEST_MULTIHOME_DATA = THIS_DIR + '/data/nmap_multihome.xml'
 TEST_MULTIHOME_V6_DATA = THIS_DIR + '/data/nmap_multihome_v6.xml'
+
+TEST_LINK_LOCAL_PARSING = THIS_DIR + '/data/nmap_ipv6_link_local_scan.yml'
+
 NDR_CONFIG = ndr.Config(THIS_DIR + '/data/test_config.yml')
 
 
@@ -204,6 +207,23 @@ class NmapTest(unittest.TestCase):
         host1 = sd_scan.hosts.pop()
         host2 = sd_scan2.hosts.pop()
         self.assertEqual(host1, host2)
+
+    def test_ipv6_link_local_scan_from_message(self):
+        '''Tests reading link local scan, as this handles the case where there's no port or service
+        information. This failed on the initial import into the DB so is a regression test in
+        additional to a functionality test'''
+
+
+        with open(TEST_LINK_LOCAL_PARSING, 'r') as f:
+            scan_raw = f.read()
+
+        msg = ndr.IngestMessage()
+        msg.load_from_yaml(scan_raw)
+
+        ipv6_ll_scan = ndr.NmapScan()
+        ipv6_ll_scan.from_message(msg)
+
+        self.assertEqual(len(ipv6_ll_scan.hosts), 2)
 
 '''    def test_mac_to_ip(self):
         multihome_scan = ndr.NmapScan()

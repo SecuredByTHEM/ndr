@@ -1,0 +1,18 @@
+generated-at: Sun, 18 Jun 2017 19:08:26 -0000
+message-type: nmap_scan
+payload:
+  hosts:
+  - addr: fe80::cb82:936e:4d06:15f3
+    mac_address: 30:85:A9:3C:9D:99
+    reason: nd-response
+    reason_ttl: 0
+    state: up
+    vendor: Asustek Computer
+  - addr: fe80::4216:7eff:fe6c:492
+    mac_address: 40:16:7E:6C:04:92
+    reason: nd-response
+    reason_ttl: 0
+    state: up
+    vendor: Asustek Computer
+  scan_type: ipv6-link-local-discovery 
+version: 1

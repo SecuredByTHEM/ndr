@@ -61,6 +61,7 @@ class NmapScan(ndr.IngestMessage):
     def __init__(self, config=None):
         self.hosts = set()
         self.scan_type = None
+        self.scan_target = None
         ndr.IngestMessage.__init__(
             self, config, ndr.IngestMessageTypes.NMAP_SCAN)
 
@@ -109,6 +110,7 @@ class NmapScan(ndr.IngestMessage):
         '''Converts the scan results to dictionary form'''
         scan_dict = {}
         scan_dict['scan_type'] = self.scan_type.value
+        scan_dict['scan_target'] = self.scan_target
         scan_dict['hosts'] = []
         for host in self.hosts:
             scan_dict['hosts'].append(host.to_dict())
@@ -117,6 +119,8 @@ class NmapScan(ndr.IngestMessage):
     def from_dict(self, scan_dict):
         '''Loads the scan results from dictionary form'''
         self.scan_type = ndr.NmapScanTypes(scan_dict['scan_type'])
+        self.scan_target = scan_dict.get('scan_target', None)
+
         for host in scan_dict['hosts']:
             self.hosts.add(NmapHost.from_dict(host))
 
