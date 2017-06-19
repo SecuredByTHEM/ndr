@@ -37,7 +37,7 @@ class Config:
         logger = logging.getLogger(name=__name__)
         logger.setLevel(logging.DEBUG)
 
-        logger.propagate = False
+        #logger.propagate = False
 
         # Only log to syslog if the socket exists (resolves build in chroot issue)
         if os.path.exists("/dev/log"):
