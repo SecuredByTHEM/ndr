@@ -221,6 +221,26 @@ class NmapHost(object):
         import json
         return hash(json.dumps(self.to_dict(), sort_keys=True, ensure_ascii=True))
 
+    def pretty_print_str(self):
+        '''Pretty prints a host object'''
+
+        pprint_string = ''
+        if self.mac_address is not None:
+            pprint_string += "MAC Address: " + self.mac_address + '\n'
+            if self.vendor is not None:
+                pprint_string += "Manufacturer: " + self.vendor + '\n'
+
+        pprint_string += "IP Address: " + self.addr.compressed + '\n'
+
+        if len(self.hostnames) != 0:
+            pprint_string += "Hostnames:\n"
+
+            for hostname in self.hostnames:
+                pprint_string += "    " + hostname.hostname + "\n"
+
+        return pprint_string
+
+
     @classmethod
     def from_xml(cls, xml):
         '''Initializes a host object from XML'''
@@ -493,7 +513,6 @@ class NmapHostname(object):
             hostname_dict['hostname'],
             hostname_dict['type']
         )
-
 
 class NmapPort(object):
 

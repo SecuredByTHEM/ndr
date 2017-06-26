@@ -35,6 +35,8 @@ TEST_MULTIHOME_V6_DATA = THIS_DIR + '/data/nmap_multihome_v6.xml'
 
 TEST_LINK_LOCAL_PARSING = THIS_DIR + '/data/nmap_ipv6_link_local_scan.yml'
 
+OUTPUT_PRETTY_PRINT_SD_SCAN = THIS_DIR + '/data/expected_outputs/pretty_print_sd_scan'
+
 NDR_CONFIG = ndr.Config(THIS_DIR + '/data/test_config.yml')
 
 
@@ -224,6 +226,17 @@ class NmapTest(unittest.TestCase):
         ipv6_ll_scan.from_message(msg)
 
         self.assertEqual(len(ipv6_ll_scan.hosts), 2)
+
+    def test_host_pretty_print(self):
+        '''Host pretty print is used when generating templates for email'''
+        sd_scan = ndr.NmapScan()
+        sd_scan.parse_nmap_xml(load_nmap_xml_data(TEST_SD_SCAN_DATA))
+        host = sd_scan.find_by_ip("72.14.184.41")
+
+        with open(OUTPUT_PRETTY_PRINT_SD_SCAN, 'r') as f:
+            expected_sd_pp = f.read()
+
+        self.assertEqual(expected_sd_pp, host.pretty_print_str())
 
 '''    def test_mac_to_ip(self):
         multihome_scan = ndr.NmapScan()
