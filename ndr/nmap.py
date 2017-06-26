@@ -62,6 +62,7 @@ class NmapScan(ndr.IngestMessage):
         self.hosts = set()
         self.scan_type = None
         self.scan_target = None
+        self.pg_id = None # Used by the server to track what scan is what
         ndr.IngestMessage.__init__(
             self, config, ndr.IngestMessageTypes.NMAP_SCAN)
 
@@ -120,6 +121,7 @@ class NmapScan(ndr.IngestMessage):
         '''Loads the scan results from dictionary form'''
         self.scan_type = ndr.NmapScanTypes(scan_dict['scan_type'])
         self.scan_target = scan_dict.get('scan_target', None)
+        self.pg_id = scan_dict.get('pg_id', None)
 
         for host in scan_dict['hosts']:
             self.hosts.add(NmapHost.from_dict(host))
@@ -210,6 +212,7 @@ class NmapHost(object):
         self.hostnames = []
         self.ports = []
         self.osmatches = []
+        self.pg_id = None # Used by the server, and not in the client
 
     def __eq__(self, other):
         return self.__hash__() == other.__hash__()
@@ -415,6 +418,7 @@ class NmapHost(object):
 
         this_host.mac_address = host_dict['mac_address']
         this_host.vendor = host_dict['vendor']
+        this_host.pg_id = host_dict.get('pg_id', None)
 
         if "hostnames" in host_dict and host_dict['hostnames'] is not None:
             for hostname_dict in host_dict['hostnames']:
