@@ -225,6 +225,11 @@ class NmapHost(object):
         '''Pretty prints a host object'''
 
         pprint_string = ''
+
+        # If we're running in the context of the server, we may have pg_id
+        if self.pg_id is not None:
+            pprint_string += "Database Identifier: " + self.pg_id + '\n'
+
         if self.mac_address is not None:
             pprint_string += "MAC Address: " + self.mac_address + '\n'
             if self.vendor is not None:
