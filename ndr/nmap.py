@@ -228,7 +228,7 @@ class NmapHost(object):
 
         # If we're running in the context of the server, we may have pg_id
         if self.pg_id is not None:
-            pprint_string += "Database Identifier: " + self.pg_id + '\n'
+            pprint_string += "Database Identifier: " + str(self.pg_id) + '\n'
 
         if self.mac_address is not None:
             pprint_string += "MAC Address: " + self.mac_address + '\n'
@@ -243,6 +243,7 @@ class NmapHost(object):
             for hostname in self.hostnames:
                 pprint_string += "    " + hostname.hostname + "\n"
 
+        pprint_string += "Detection Method: " + self.reason.value + "\n"
         return pprint_string
 
 
