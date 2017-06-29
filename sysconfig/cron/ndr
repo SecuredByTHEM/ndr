@@ -9,3 +9,4 @@ MAILTO=""
 # Process the master system control tab
 30 * * * *	root	/usr/sbin/logrotate -f /etc/logrotate.d/ndr
 45 * * * *	root	ndr-scan-network
+15 * * * *	root	ndr-snort-traffic-uploader /persistant/snort/all-traffic
