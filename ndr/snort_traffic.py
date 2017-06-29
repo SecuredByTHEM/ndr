@@ -139,7 +139,6 @@ class SnortTrafficLog(ndr.IngestMessage):
                 packets += value['txpackets']
                 self.consolated_traffic.append(value)
 
-            print(packets)
 class SnortTrafficEntry(object):
     '''Represents a single log message of snort traffic information'''
     def __init__(self):

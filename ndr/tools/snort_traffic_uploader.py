@@ -87,7 +87,8 @@ def main():
     snort_traffic_log.consolate()
     logger.info("Done")
 
-    snort_traffic_log.create_report()
+    snort_traffic_log.sign_report()
+    snort_traffic_log.load_into_queue()
 
 if __name__ == '__main__':
     main()
