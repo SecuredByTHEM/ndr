@@ -21,6 +21,7 @@ import datetime
 import ipaddress
 import csv
 import sys
+import collections
 
 import ndr
 
@@ -34,7 +35,7 @@ import ndr
 class SnortTrafficLog(ndr.IngestMessage):
     '''Represents a single log upload message of snort IP traffic'''
     def __init__(self, config=None):
-        self.traffic_entries = set()
+        self.traffic_entries = []
         self.consolated_traffic = []
         ndr.IngestMessage.__init__(
             self, config, ndr.IngestMessageTypes.SNORT_TRAFFIC)
@@ -68,18 +69,16 @@ class SnortTrafficLog(ndr.IngestMessage):
 
     def from_dict(self, traffic_dict):
         '''Deserializes a SnortTrafficLog'''
-        self.traffic_entries = []
-        traffic_entries_dicts = traffic_dict['log']
+        consolated_traffic_dicts = traffic_dict['consolated_traffic']
 
-        for entry in traffic_entries_dicts:
-            ste = SnortTrafficEntry()
-            ste.from_dict(entry)
-            self.traffic_entries.append(ste)
+        for entry in consolated_traffic_dicts:
+            ste = SnortConsolatedTrafficEntry.from_dict(entry)
+            self.consolated_traffic.append(ste)
 
     def consolate(self):
         '''Consolates a traffic report into a summary of information on what was happening'''
-        traffic_consolation = {}
-        traffic_consolation_fullduplex = {}
+        traffic_consolation = collections.OrderedDict()
+        traffic_consolation_fullduplex = collections.OrderedDict()
 
         for entry in self.traffic_entries:
             # We need to consolate based on where it's going, where it coming from, and protocol.
@@ -160,7 +159,7 @@ class SnortTrafficLog(ndr.IngestMessage):
                     try:
                         traffic_entry = ndr.SnortTrafficEntry()
                         traffic_entry.from_csv(row)
-                        self.traffic_entries.add(traffic_entry)
+                        self.traffic_entries.append(traffic_entry)
                     except ValueError:
                         self.config.logger.error("failed to parse %s in %s: %s",
                                                  row, logfile, sys.exc_info()[1])
