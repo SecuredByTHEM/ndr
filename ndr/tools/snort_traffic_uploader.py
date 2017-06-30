@@ -14,40 +14,10 @@
 # You should have received a copy of the GNU General Public License
 # along with NDR.  If not, see <http://www.gnu.org/licenses/>.
 
-import csv
 import argparse
 import os
-import sys
 
 import ndr
-
-def parse_log(logger, traffic_log, logfile):
-    '''Parses an individual log file'''
-
-    try:
-        with open(logfile, 'r') as f:
-            reader = csv.DictReader(f, ['timestamp',
-                                        'proto',
-                                        'src',
-                                        'srcport',
-                                        'dst',
-                                        'dstport',
-                                        'ethsrc',
-                                        'ethdst',
-                                        'ethlen',
-                                        'tcpflags',
-                                        'tcpseq'])
-            for row in reader:
-                try:
-                    traffic_entry = ndr.SnortTrafficEntry()
-                    traffic_entry.from_csv(row)
-                    traffic_log.traffic_entries.append(traffic_entry)
-                except ValueError:
-                    logger.error("failed to parse %s in %s: %s", row, logfile, sys.exc_info()[1])
-                except:
-                    logger.error("cataphoric error %s %s %s", logfile, row, sys.exc_info()[0])
-    finally:
-        pass
 
 def main():
     parser = argparse.ArgumentParser(
@@ -65,7 +35,7 @@ def main():
     for logpath in args.logs:
         if os.path.isfile(logpath):
             logger.debug("Processing log: %s", logpath)
-            parse_log(logger, ndr_config, logpath)
+            snort_traffic_log.append_log(logpath)
             continue
 
         logger.debug("Processing log directory: %s", logpath)
@@ -77,7 +47,7 @@ def main():
                     logger.debug("Skipping base log file: %s", filename)
                     continue
                 logger.debug("Parsing: %s", filename)
-                parse_log(logger, snort_traffic_log, logpath+filename)
+                snort_traffic_log.append_log(logpath+filename)
 
         # Testing output
         #import pprint

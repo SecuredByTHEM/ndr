@@ -23,8 +23,60 @@ import ndr
 
 # Testing data from a live system running syslog-ng in JSON reporting mode
 THIS_DIR = os.path.dirname(os.path.abspath(__file__))
-SNORT_TRAFFIC_DATA = THIS_DIR + 'tests/data/snort_all_traffic.csv'
+SNORT_TRAFFIC_DATA = THIS_DIR + '/data/snort_all_traffic.csv'
 
 class SnortTrafficTest(unittest.TestCase):
+    '''Tests handling of snort traffic data reporting'''
+
+    def check_output_dict(self, traffic_dict):
+        '''Checks the serialization dict against known values'''
+        # Let's check some of the values
+        for entry in traffic_dict['consolated_traffic']:
+            if entry['proto'] != 'tcp':
+                continue
+
+            self.assertEqual(entry['src'], '192.168.2.3')
+            self.assertEqual(entry['dstport'], 58724)
+            self.assertEqual(entry['srcport'], 22)
+            self.assertEqual(entry['ethdst'], '30:85:A9:3C:9D:99')
+            self.assertEqual(entry['ethsrc'], '84:39:BE:64:3F:E5')
+            self.assertEqual(entry['rxpackets'], 48)
+            self.assertEqual(entry['txpackets'], 40)
+
     def test_parsing(self):
-        snort_traffic = ndr.SnortTrafficLog()
+        '''Tests parsing a Snort CSV file'''
+        traffic_log = ndr.SnortTrafficLog()
+        traffic_log.append_log(SNORT_TRAFFIC_DATA)
+        self.assertEqual(len(traffic_log), 90)
+
+    def test_consolation(self):
+        '''Tests that we get expected consolated data'''
+        traffic_log = ndr.SnortTrafficLog()
+        traffic_log.append_log(SNORT_TRAFFIC_DATA)
+
+        traffic_log.consolate()
+        self.assertEqual(len(traffic_log.consolated_traffic), 2)
+
+    def test_dict_serialization(self):
+        '''Tests exporting to dict form'''
+        traffic_log = ndr.SnortTrafficLog()
+        traffic_log.append_log(SNORT_TRAFFIC_DATA)
+        traffic_log.consolate()
+
+        traffic_dict = traffic_log.to_dict()
+        self.assertEqual(len(traffic_dict['consolated_traffic']), 2)
+        self.check_output_dict(traffic_dict)
+
+    def test_dict_deserialization(self):
+        '''Tests that a dict is properly deserialized'''
+        traffic_log = ndr.SnortTrafficLog()
+        traffic_log.append_log(SNORT_TRAFFIC_DATA)
+        traffic_log.consolate()
+
+        traffic_dict = traffic_log.to_dict()
+
+        deserialized_traffic_log = ndr.SnortTrafficLog()
+        deserialized_traffic_log.from_dict(traffic_dict)
+
+        self.assertEqual(len(deserialized_traffic_log.consolated_traffic), 2)
+        self.check_output_dict(deserialized_traffic_log.to_dict())

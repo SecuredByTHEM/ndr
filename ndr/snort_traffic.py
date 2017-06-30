@@ -18,14 +18,19 @@
 
 '''Handles parsing snort CSV reports relating to network traffic'''
 import datetime
-import time
 import ipaddress
+import csv
+import sys
+import collections
 
 import ndr
 
 # For snort CSV files to properly parse, two config options must be set
 # config utc (for UTC dates)
 # config show_year (or start snort with -y)
+
+# NOTE: the naming in this class is to be consistent with SNORT configurations
+# options, hence the lack of spaces/underscores between things.
 
 class SnortTrafficLog(ndr.IngestMessage):
     '''Represents a single log upload message of snort IP traffic'''
@@ -49,36 +54,31 @@ class SnortTrafficLog(ndr.IngestMessage):
         super().create_report()
 
     def to_dict(self):
-        '''Prepares a SnortTrafficLog for serialization'''
+        '''Prepares a SnortTrafficLog for serialization.
+
+        Only consolated data is serialized. Run consolate() before this function'''
+
         traffic_log_dict = {}
         traffic_log_dict['consolated_traffic'] = []
 
         for entry in self.consolated_traffic:
-            flattened_entry = entry
-
-            # Convert the values from flat representations to types as approperate
-            flattened_entry['proto'] = flattened_entry['proto'].value
-            flattened_entry['src'] = flattened_entry['src'].compressed
-            flattened_entry['dst'] = flattened_entry['dst'].compressed
-            traffic_log_dict['consolated_traffic'].append(flattened_entry)
+            traffic_log_dict['consolated_traffic'].append(entry.to_dict())
 
         return traffic_log_dict
 
 
     def from_dict(self, traffic_dict):
         '''Deserializes a SnortTrafficLog'''
-        self.traffic_entries = []
-        traffic_entries_dicts = traffic_dict['log']
+        consolated_traffic_dicts = traffic_dict['consolated_traffic']
 
-        for entry in traffic_entries_dicts:
-            ste = SnortTrafficEntry()
-            ste.from_dict(entry)
-            self.traffic_entries.append(ste)
+        for entry in consolated_traffic_dicts:
+            ste = SnortConsolatedTrafficEntry.from_dict(entry)
+            self.consolated_traffic.append(ste)
 
     def consolate(self):
-        '''Consolates a traffic report into a summary of information on what was happening and where'''
-        traffic_consolation = {}
-        traffic_consolation_fullduplex = {}
+        '''Consolates a traffic report into a summary of information on what was happening'''
+        traffic_consolation = collections.OrderedDict()
+        traffic_consolation_fullduplex = collections.OrderedDict()
 
         for entry in self.traffic_entries:
             # We need to consolate based on where it's going, where it coming from, and protocol.
@@ -108,6 +108,7 @@ class SnortTrafficLog(ndr.IngestMessage):
             if entry.timestamp < traffic_consolation[key]['firstseen']:
                 traffic_consolation[key]['firstseen'] = entry.timestamp
 
+            # And bump up the packet count
             traffic_consolation[key]['packets'] += 1
 
         # Now we go through this a second time and match end to ends
@@ -129,15 +130,100 @@ class SnortTrafficLog(ndr.IngestMessage):
             if inverse_key in traffic_consolation:
                 traffic_consolation_fullduplex[key]['rxpackets'] = traffic_consolation[inverse_key]['packets']
                 if traffic_consolation[inverse_key]['firstseen'] < traffic_consolation_fullduplex[key]['firstseen']:
-                     traffic_consolation_fullduplex[key]['firstseen'] = traffic_consolation[inverse_key]['firstseen']
+                    traffic_consolation_fullduplex[key]['firstseen'] = traffic_consolation[inverse_key]['firstseen']
 
             # Zero out the internal consolated traffic list, and copy it in
             self.consolated_traffic = []
-            packets = 0
             for _, value in traffic_consolation_fullduplex.items():
-                packets += value['rxpackets']
-                packets += value['txpackets']
-                self.consolated_traffic.append(value)
+                # Create a ConsolatedTrafficEntry object for this, then append it.
+                cte = SnortConsolatedTrafficEntry().from_dict(value)
+                self.consolated_traffic.append(cte)
+
+    def append_log(self, logfile):
+        '''Parses an individual log file, and appends it to this traffic log'''
+
+        try:
+            with open(logfile, 'r') as f:
+                reader = csv.DictReader(f, ['timestamp',
+                                            'proto',
+                                            'src',
+                                            'srcport',
+                                            'dst',
+                                            'dstport',
+                                            'ethsrc',
+                                            'ethdst',
+                                            'ethlen',
+                                            'tcpflags',
+                                            'tcpseq'])
+                for row in reader:
+                    try:
+                        traffic_entry = ndr.SnortTrafficEntry()
+                        traffic_entry.from_csv(row)
+                        self.traffic_entries.append(traffic_entry)
+                    except ValueError:
+                        self.config.logger.error("failed to parse %s in %s: %s",
+                                                 row, logfile, sys.exc_info()[1])
+                    except:
+                        self.config.logger.error("cataphoric error %s %s %s",
+                                                 logfile, row, sys.exc_info()[0])
+        finally:
+            pass
+
+class SnortConsolatedTrafficEntry(object):
+    '''Entry of a summary of consolated traffic information'''
+    def __init__(self):
+        self.firstseen = None
+        self.proto = None
+        self.src = None
+        self.srcport = None
+        self.dst = None
+        self.dstport = None
+        self.ethsrc = None
+        self.ethdst = None
+        self.rxpackets = 0
+        self.txpackets = 0
+
+    def to_dict(self):
+        '''Creates a serialiable dict of the consolated traffic log'''
+        cte_dict = {}
+        cte_dict['firstseen'] = self.firstseen
+        cte_dict['proto'] = self.proto.value
+        cte_dict['src'] = self.src.compressed
+
+        # Again, these values can be optional
+        cte_dict['srcport'] = self.srcport
+        cte_dict['dst'] = self.dst.compressed
+        cte_dict['dstport'] = self.dstport
+
+        cte_dict['ethsrc'] = self.ethsrc
+        cte_dict['ethdst'] = self.ethdst
+        cte_dict['rxpackets'] = self.rxpackets
+        cte_dict['txpackets'] = self.txpackets
+        return cte_dict
+
+    @classmethod
+    def from_dict(cls, cte_dict):
+        '''Creates a consolated traffic entry from a dict'''
+        cte = SnortConsolatedTrafficEntry()
+        cte.firstseen = cte_dict['firstseen']
+        cte.proto = ndr.PortProtocols(cte_dict['proto'])
+        cte.src = ipaddress.ip_address(cte_dict['src'])
+
+        # These values can be optional
+        if cte_dict['srcport'] is not None:
+            cte.srcport = int(cte_dict['srcport'])
+
+        cte.dst = ipaddress.ip_address(cte_dict['dst'])
+
+        if cte_dict['dstport'] is not None:
+            cte.dstport = int(cte_dict['dstport'])
+
+        cte.ethsrc = cte_dict['ethsrc']
+        cte.ethdst = cte_dict['ethdst']
+        cte.rxpackets = int(cte_dict['rxpackets'])
+        cte.txpackets = int(cte_dict['txpackets'])
+
+        return cte
 
 class SnortTrafficEntry(object):
     '''Represents a single log message of snort traffic information'''
