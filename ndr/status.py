@@ -34,11 +34,9 @@ class StatusMessage(ndr.IngestMessage):
         super().create_report()
 
     def to_dict(self):
-        '''Prepares a SnortTrafficLog for serialization.
-
-        Only consolated data is serialized. Run consolate() before this function'''
+        '''Prepares a status message for serialization.'''
         return None
 
     def from_dict(self, traffic_dict):
-        '''Deserializes a SnortTrafficLog'''
+        '''Deserializes the status message'''
         pass
