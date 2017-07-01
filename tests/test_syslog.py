@@ -17,10 +17,12 @@
 # You should have received a copy of the GNU General Public License
 # along with NDR.  If not, see <http://www.gnu.org/licenses/>.
 
-import yaml
 import unittest
-import ndr
 import os
+
+import ndr
+import yaml
+
 from ndr import SyslogUploadMessage, SyslogEntry
 
 # Testing data from a live system running syslog-ng in JSON reporting mode
