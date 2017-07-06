@@ -163,7 +163,7 @@ class SnortTrafficLog(ndr.IngestMessage):
                     except ValueError:
                         self.config.logger.error("failed to parse %s in %s: %s",
                                                  row, logfile, sys.exc_info()[1])
-                    except:
+                    except: # pylint: disable=W0702
                         self.config.logger.error("cataphoric error %s %s %s",
                                                  logfile, row, sys.exc_info()[0])
         finally:

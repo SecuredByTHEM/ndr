@@ -17,6 +17,9 @@
 # You should have received a copy of the GNU General Public License
 # along with NDR.  If not, see <http://www.gnu.org/licenses/>.
 
+'''Handles configuration for NDR and holds global state variables such as the
+logger variables'''
+
 import os
 import sys
 import socket
@@ -24,6 +27,10 @@ import logging
 import logging.handlers
 
 import yaml
+
+# pylint: disable=R0902
+# The config method handles global state information from the config file
+# and is used as a global object.
 
 class Config:
     '''Handles global configuration information for NDR'''
@@ -77,10 +84,24 @@ class Config:
         else:
             raise ValueError("Unknown or missing upload method")
 
+        self.image_timestamp_file = config_dict.get('image_timestamp_file',
+                                                    '/persistent/ota.timestamp')
+
+    def get_image_version(self):
+        '''Tries to load the image revision file'''
+        try:
+            with open(self.image_timestamp_file, 'r') as ts_file:
+                return int(ts_file.read())
+        except: # pylint: disable=W0702
+            self.logger.error('Failed to get image timestamp file!')
+            return None
+
     @property
     def ingest_uucp_path(self):
+        '''Generates the Ingest UUCP path'''
         return self.ingest_uucp_host + "!" + self.ingest_uucp_dir
 
     @property
     def enrollment_uucp_path(self):
+        '''Generates the enrollment UUCP path'''
         return self.ingest_uucp_host + "!" + self.enrollment_uucp_dir

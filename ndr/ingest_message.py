@@ -324,6 +324,7 @@ class IngestMessage:
 class IngestMessageTypes(Enum):
 
     '''List of known message types'''
+    ALERT_MSG = "alert-msg"
     STATUS = "status"
     CERTIFICATE_REQUEST = "cert_request"
     SYSLOG_UPLOAD = "syslog_upload"
