@@ -33,9 +33,9 @@ def main():
 
     # Enter processing loop for syslog-ng
     while 1:
-        try:
-            syslog_message = sys.stdin.readline()
+        syslog_message = sys.stdin.readline()
 
+        try:
             yaml_line = yaml.safe_load(syslog_message)
             entry = ndr.SyslogEntry.from_dict(yaml_line)
 
@@ -49,7 +49,9 @@ def main():
             alert_msg.load_into_queue()
 
         except:
+            # Something went wrong, log it, and keep going
             logger.error(sys.exc_info()[0])
+            logger.error("Tried to process %s", syslog_message)
 
 if __name__ == "__main__":
     main()
