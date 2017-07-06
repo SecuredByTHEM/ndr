@@ -38,7 +38,8 @@ setup(
             'ndr-enlist = ndr.tools.enlist:main',
             'ndr-alert-tester = ndr.tools.alert_tester:main',
             'ndr-snort-trafic-uploader = ndr.tools.snort_traffic_uploader:main',
-            'ndr-process-message = ndr.tools.process_message:main'
+            'ndr-process-message = ndr.tools.process_message:main',
+            'ndr-syslog-alertd = ndr.tools.syslog_alert:main'
         ]
     },
     test_suite="tests"
