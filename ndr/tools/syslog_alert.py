@@ -39,6 +39,15 @@ def main():
             yaml_line = yaml.safe_load(syslog_message)
             entry = ndr.SyslogEntry.from_dict(yaml_line)
 
+            # Generate an alert message for this entry
+            alert_msg = ndr.AlertMessage(ndr_config)
+            alert_msg.raised_by = entry.program
+            alert_msg.contents = entry.message
+
+            # And send it on its merry way
+            alert_msg.sign_report()
+            alert_msg.load_into_queue()
+
         except:
             logger.error(sys.exc_info()[0])
 
