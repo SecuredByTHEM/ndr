@@ -55,21 +55,21 @@ class AlertMessageTest(unittest.TestCase):
         alert_message = ndr.AlertMessage(self._ncc)
 
         alert_message.raised_by = "unittest"
-        alert_message.message = "Test"
+        alert_message.contents = "Test"
 
         alert_dict = alert_message.to_dict()
         self.assertEqual(alert_dict['raised_by'], 'unittest')
-        self.assertEqual(alert_dict['message'], 'Test')
+        self.assertEqual(alert_dict['contents'], 'Test')
 
     def test_dict_deserialization(self):
         '''Tests that a dict is properly deserialized'''
 
         alert_dict = {}
         alert_dict['raised_by'] = "unittest"
-        alert_dict['message'] = "Test"
+        alert_dict['contents'] = "Test"
 
         alert_message = ndr.AlertMessage(self._ncc)
         alert_message.from_dict(alert_dict)
 
         self.assertEqual(alert_message.raised_by, 'unittest')
-        self.assertEqual(alert_message.message, 'Test')
+        self.assertEqual(alert_message.contents, 'Test')

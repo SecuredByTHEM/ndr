@@ -29,7 +29,7 @@ class Syslog(object):
 
     def add_entry(self, syslog_msg):
         '''Loads a message into the syslog entry'''
-        if isinstance(syslog_msg, SyslogEntry) == False:
+        if isinstance(syslog_msg, SyslogEntry) is False:
             raise ValueError("SyslogUploadMessage only takes SyslogEntry!")
         self.syslog_entries.append(syslog_msg)
 

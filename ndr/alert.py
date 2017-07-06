@@ -26,7 +26,9 @@ class AlertMessage(ndr.IngestMessage):
     '''Creates status messages to the server'''
     def __init__(self, config=None):
         self.raised_by = ""
-        self.message = ""
+
+        # Would have called this message, but conflicts w/ the base class
+        self.contents = ""
         ndr.IngestMessage.__init__(
             self, config, ndr.IngestMessageTypes.ALERT_MSG)
 
@@ -45,7 +47,7 @@ class AlertMessage(ndr.IngestMessage):
         '''Prepares a status message for serialization.'''
         alert_dict = {}
         alert_dict['raised_by'] = self.raised_by
-        alert_dict['message'] = self.message
+        alert_dict['contents'] = self.contents
 
         return alert_dict
 
@@ -53,4 +55,4 @@ class AlertMessage(ndr.IngestMessage):
         '''Deserializes the status message'''
 
         self.raised_by = alert_dict['raised_by']
-        self.message = alert_dict['message']
+        self.contents = alert_dict['contents']
