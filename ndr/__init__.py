@@ -24,7 +24,7 @@ interfaces directly into the ndr namespace'''
 from ndr.config import Config
 from ndr.ingest_message import IngestMessage, IngestMessageTypes, IngestMessageDestinations
 from ndr.syslog import SyslogEntry, SyslogFacilities, SyslogPriorities, SyslogUploadMessage
-from ndr.exception import NdrExpection, NmapFailure
+from ndr.exception import NdrExpection, NmapFailure, UploadFailure
 from ndr.nmap import (NmapHost,
                       NmapScan,
                       NmapHostname,

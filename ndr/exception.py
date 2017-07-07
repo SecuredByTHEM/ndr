@@ -27,11 +27,11 @@ class NmapFailure(NdrExpection):
     def __init__(self, error_code, stderr_output):
         self.error_code = error_code
         self.stderr_output = stderr_output
-        super(NmapFailure, self).__init__()
+        NdrExpection.__init__(self)
 
 class UploadFailure(NdrExpection):
     """Raised when NMAP shits itself"""
     def __init__(self, error_code, stderr_output):
         self.error_code = error_code
         self.stderr_output = stderr_output
-        super(NmapFailure, self).__init__()
+        NdrExpection.__init__(self)
