@@ -21,6 +21,7 @@ syslog messages. As of right now, it's invoked by syslog-ng and runs
 in a loop reading from stdin'''
 
 import sys
+import traceback
 
 import yaml
 import ndr
@@ -50,7 +51,8 @@ def main():
 
         except:
             # Something went wrong, log it, and keep going
-            logger.error(sys.exc_info()[0])
+            trace = traceback.format_exc()
+            logger.error("alertd died with error: %s", trace)
             logger.error("Tried to process %s", syslog_message)
 
 if __name__ == "__main__":
