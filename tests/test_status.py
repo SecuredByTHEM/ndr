@@ -58,12 +58,18 @@ class StatusTest(unittest.TestCase):
     def test_dict_serialization(self):
         '''Tests exporting to dict form'''
         status_message = ndr.StatusMessage(self._ncc)
+        status_message.populate_status_information()
+
+        status_dict = status_message.to_dict()
+        self.assertEqual(status_dict['software_revision'], self._current_time)
 
     def test_dict_deserialization(self):
         '''Tests that a dict is properly deserialized'''
-        status_message = ndr.StatusMessage(self._ncc)
 
-    def check_output_dict(self, traffic_dict):
-        '''Checks the serialization dict against known values'''
-        # Let's check some of the values
+        status_dict = {}
+        status_dict['software_revision'] = self._current_time
+
         status_message = ndr.StatusMessage(self._ncc)
+        status_message.from_dict(status_dict)
+
+        self.assertEqual(status_message.software_revision, self._current_time)

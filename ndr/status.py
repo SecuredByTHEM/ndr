@@ -29,14 +29,27 @@ class StatusMessage(ndr.IngestMessage):
         super().from_message(ingest_msg)
         return self
 
+    def populate_status_information(self):
+        '''Populates the status information fields from the currently running image'''
+        self.software_revision = self.config.get_image_version()
+
     def create_report(self):
         '''Creates a status report message'''
+
+        # If we're going to send a status message, always make sure it's up to date
+        self.populate_status_information()
+
+        self.add_header('payload', self.to_dict())
         super().create_report()
 
     def to_dict(self):
         '''Prepares a status message for serialization.'''
-        return None
+        status_dict = {}
+        status_dict['software_revision'] = self.software_revision
 
-    def from_dict(self, traffic_dict):
+        return status_dict
+
+    def from_dict(self, status_dict):
         '''Deserializes the status message'''
-        pass
+
+        self.software_revision = status_dict['software_revision']
