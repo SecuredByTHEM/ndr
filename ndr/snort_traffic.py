@@ -24,6 +24,7 @@ import sys
 import collections
 
 import ndr
+import ndr_netcfg
 
 # For snort CSV files to properly parse, two config options must be set
 # config utc (for UTC dates)
@@ -80,9 +81,45 @@ class SnortTrafficLog(ndr.IngestMessage):
         traffic_consolation = collections.OrderedDict()
         traffic_consolation_fullduplex = collections.OrderedDict()
 
+        # Get the home submask(s)
+        netcfg = ndr_netcfg.NetworkConfiguration(None)
+        home_ipnets = netcfg.retrieve_home_ip_networks()
+
         for entry in self.traffic_entries:
             # We need to consolate based on where it's going, where it coming from, and protocol.
             # so we need to create a unique hash based on this information
+
+            # HACK HACK HACK: As of right now, we need to make sure that the src is always from the
+            # perspective of the LAN. As of right now, because we don't have regular stream tracing
+            # due to the logistical difficulties in doing so, there's no way to easily tell
+            # if a connection originated from the LAN or remotely without seeing SYN, SYN/ACK, ACK
+            # traffic patterns. Because of the way SNORT packet capture works, we aren't going to
+            # see that for long-lived TCP/IP connections. As such, we're going to operate on the
+            # assumption that nothing is in the DMZ, and force traffic on a private subnet to be the
+            # source.
+
+            # As such, we need to dynamically rewrite the values and flip them the right way around
+            # if we see a match. This is so horrible.
+
+            flip_required = True
+            for ipnet in home_ipnets:
+                if entry.src in home_ipnets:
+                    flip_required = False
+                    break
+
+            # Flip the values around if we need to:
+            if flip_required:
+                orig_dst = entry.dst
+                orig_dstport = entry.dstport
+                orig_ethdst = entry.ethdst
+
+                entry.dst = entry.src
+                entry.dstport = entry.srcport
+                entry.ethdst = entry.ethsrc
+
+                entry.src = orig_dst
+                entry.srcport = orig_dstport
+                entry.ethsrc = orig_ethdst
 
             # For UDP ports, we don't care what the srcport is, just the dstport since it's not
             # stream based
