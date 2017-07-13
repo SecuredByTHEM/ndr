@@ -206,9 +206,7 @@ class SnortConsolatedTrafficEntry(object):
         self.firstseen = None
         self.proto = None
         self.src = None
-        self.srcport = None
         self.dst = None
-        self.dstport = None
         self.ethsrc = None
         self.ethdst = None
         self.rxpackets = 0
@@ -217,13 +215,13 @@ class SnortConsolatedTrafficEntry(object):
     def dict_key(self):
         '''Creates a hash of this object'''
         return hash(
-            (self.proto, self.src, self.srcport, self.dst, self.dstport, self.ethsrc, self.ethdst)
+            (self.proto, self.src, self.dst, self.ethsrc, self.ethdst)
         )
 
     def inverse_dict_key(self):
         '''Creates the inverted hash of this object'''
         return hash(
-            (self.proto, self.dst, self.dstport, self.src, self.srcport, self.ethdst, self.ethsrc)
+            (self.proto, self.dst, self.src, self.ethdst, self.ethsrc)
         )
 
     def is_match(self, other):
@@ -238,9 +236,7 @@ class SnortConsolatedTrafficEntry(object):
         '''Determines if a CTE is the same'''
         if (self.proto == other.proto and
                 self.src == other.src and
-                self.srcport == other.srcport and
                 self.dst == other.dst and
-                self.dstport == other.dstport and
                 self.ethsrc == other.ethsrc and
                 self.ethdst == other.ethdst):
             return True
@@ -251,9 +247,7 @@ class SnortConsolatedTrafficEntry(object):
         '''Determines if a CTE is an invert of the other'''
         if (self.proto == other.proto and
                 self.src == other.dst and
-                self.srcport == other.dstport and
                 self.dst == other.src and
-                self.dstport == other.srcport and
                 self.ethsrc == other.ethdst and
                 self.ethdst == other.ethsrc):
             return True
@@ -285,9 +279,7 @@ class SnortConsolatedTrafficEntry(object):
         cte_dict['src'] = self.src.compressed
 
         # Again, these values can be optional
-        cte_dict['srcport'] = self.srcport
         cte_dict['dst'] = self.dst.compressed
-        cte_dict['dstport'] = self.dstport
 
         cte_dict['ethsrc'] = self.ethsrc
         cte_dict['ethdst'] = self.ethdst
@@ -303,14 +295,7 @@ class SnortConsolatedTrafficEntry(object):
         cte.proto = ndr.PortProtocols(cte_dict['proto'])
         cte.src = ipaddress.ip_address(cte_dict['src'])
 
-        # These values can be optional
-        if cte_dict['srcport'] is not None:
-            cte.srcport = int(cte_dict['srcport'])
-
         cte.dst = ipaddress.ip_address(cte_dict['dst'])
-
-        if cte_dict['dstport'] is not None:
-            cte.dstport = int(cte_dict['dstport'])
 
         cte.ethsrc = cte_dict['ethsrc']
         cte.ethdst = cte_dict['ethdst']
