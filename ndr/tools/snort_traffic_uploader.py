@@ -16,6 +16,7 @@
 
 import argparse
 import os
+import traceback
 
 import ndr
 
@@ -43,22 +44,29 @@ def main():
             filelist.sort() # Causes the files to be spat out oldest first
             # We're not interested in subdirectories so
             for filename in filelist:
-                if filename == args.filename:
-                    logger.debug("Skipping base log file: %s", filename)
-                    continue
-                logger.debug("Parsing: %s", filename)
-                snort_traffic_log.append_log(logpath+filename)
+                logfile = logpath+"/"+filename
 
-        # Testing output
-        #import pprint
-        #pprint.pprint(snort_traffic_log.to_dict())
+                try:
+                    if filename == args.filename:
+                        logger.debug("Skipping base log file: %s", filename)
+                        continue
+                    logger.debug("Parsing: %s", filename)
 
-    logger.info("Starting consolation")
-    snort_traffic_log.consolate()
-    logger.info("Done")
+                    snort_traffic_log.append_log(logfile)
+                    snort_traffic_log.consolate()
 
-    snort_traffic_log.sign_report()
-    snort_traffic_log.load_into_queue()
+                except:
+                    trace = traceback.format_exc()
+                    logger.error("log parse died with error: %s", trace)
+                finally:
+                    # Delete the log file after we're done with it
+                    os.remove(logfile)
+
+    print("Finished")
+    while True:
+        pass
+    #snort_traffic_log.sign_report()
+    #snort_traffic_log.load_into_queue()
 
 if __name__ == '__main__':
     main()
