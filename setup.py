@@ -37,9 +37,10 @@ setup(
             'ndr-scan-network = ndr.tools.scan_network:main',
             'ndr-enlist = ndr.tools.enlist:main',
             'ndr-alert-tester = ndr.tools.alert_tester:main',
-            'ndr-snort-trafic-uploader = ndr.tools.snort_traffic_uploader:main',
+            'ndr-snort-traffic-uploader = ndr.tools.snort_traffic_uploader:main',
             'ndr-process-message = ndr.tools.process_message:main',
-            'ndr-syslog-alertd = ndr.tools.syslog_alert:main'
+            'ndr-syslog-alertd = ndr.tools.syslog_alert:main',
+            'ndr-status-uploader = ndr.tools.status:main'
         ]
     },
     test_suite="tests"
