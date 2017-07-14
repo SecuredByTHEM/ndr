@@ -40,10 +40,6 @@ class SnortTrafficLog(ndr.IngestMessage):
         self.traffic_entries = []
         self.consolated_traffic = {}
 
-        # Get the home submask(s)
-        netcfg = ndr_netcfg.NetworkConfiguration(None)
-        self.home_ipnets = netcfg.retrieve_home_ip_networks()
-
         ndr.IngestMessage.__init__(
             self, config, ndr.IngestMessageTypes.SNORT_TRAFFIC)
 
