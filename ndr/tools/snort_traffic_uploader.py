@@ -55,11 +55,14 @@ def main():
                     snort_traffic_log.append_log(logfile)
                     snort_traffic_log.consolate()
 
+                    # Delete the log file after we're done with it
+                    os.remove(logfile)
+
                 except:
                     trace = traceback.format_exc()
                     logger.error("log parse died with error: %s", trace)
-                finally:
-                    # Delete the log file after we're done with it
+                    # Can't do this in a finally block as we need to skip the base log file
+                    # or SNORT ABENDs
                     os.remove(logfile)
 
     snort_traffic_log.sign_report()
