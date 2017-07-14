@@ -140,7 +140,6 @@ class SnortTrafficLog(ndr.IngestMessage):
                     traffic_consolation_fullduplex[key]['firstseen'] = traffic_consolation[inverse_key]['firstseen']
 
         # Now we create new CTEs and update ourselves
-        print("Appending ", len(traffic_consolation_fullduplex), " values to ", len(self.consolated_traffic))
         for _, value in traffic_consolation_fullduplex.items():
             # Create a ConsolatedTrafficEntry object for this, then append it.
             cte = SnortConsolatedTrafficEntry().from_dict(value)
@@ -149,8 +148,6 @@ class SnortTrafficLog(ndr.IngestMessage):
         # Finally, zero out the internal traffic reports
         self.traffic_entries = []
         gc.collect()
-
-        print("Consolated to ", len(self.consolated_traffic),"  CTEs")
 
     def update_or_append_cte(self, new_cte):
         '''Updates or appends a CTE object to this traffic report'''
