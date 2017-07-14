@@ -22,8 +22,10 @@ import ipaddress
 import csv
 import sys
 import collections
+import gc
 
 import ndr
+import ndr_netcfg
 
 # For snort CSV files to properly parse, two config options must be set
 # config utc (for UTC dates)
@@ -36,7 +38,12 @@ class SnortTrafficLog(ndr.IngestMessage):
     '''Represents a single log upload message of snort IP traffic'''
     def __init__(self, config=None):
         self.traffic_entries = []
-        self.consolated_traffic = []
+        self.consolated_traffic = {}
+
+        # Get the home submask(s)
+        netcfg = ndr_netcfg.NetworkConfiguration(None)
+        self.home_ipnets = netcfg.retrieve_home_ip_networks()
+
         ndr.IngestMessage.__init__(
             self, config, ndr.IngestMessageTypes.SNORT_TRAFFIC)
 
@@ -61,7 +68,7 @@ class SnortTrafficLog(ndr.IngestMessage):
         traffic_log_dict = {}
         traffic_log_dict['consolated_traffic'] = []
 
-        for entry in self.consolated_traffic:
+        for _, entry in self.consolated_traffic.items():
             traffic_log_dict['consolated_traffic'].append(entry.to_dict())
 
         return traffic_log_dict
@@ -72,8 +79,8 @@ class SnortTrafficLog(ndr.IngestMessage):
         consolated_traffic_dicts = traffic_dict['consolated_traffic']
 
         for entry in consolated_traffic_dicts:
-            ste = SnortConsolatedTrafficEntry.from_dict(entry)
-            self.consolated_traffic.append(ste)
+            cte = SnortConsolatedTrafficEntry.from_dict(entry)
+            self.update_or_append_cte(cte)
 
     def consolate(self):
         '''Consolates a traffic report into a summary of information on what was happening'''
@@ -132,12 +139,33 @@ class SnortTrafficLog(ndr.IngestMessage):
                 if traffic_consolation[inverse_key]['firstseen'] < traffic_consolation_fullduplex[key]['firstseen']:
                     traffic_consolation_fullduplex[key]['firstseen'] = traffic_consolation[inverse_key]['firstseen']
 
-            # Zero out the internal consolated traffic list, and copy it in
-            self.consolated_traffic = []
-            for _, value in traffic_consolation_fullduplex.items():
-                # Create a ConsolatedTrafficEntry object for this, then append it.
-                cte = SnortConsolatedTrafficEntry().from_dict(value)
-                self.consolated_traffic.append(cte)
+        # Now we create new CTEs and update ourselves
+        for _, value in traffic_consolation_fullduplex.items():
+            # Create a ConsolatedTrafficEntry object for this, then append it.
+            cte = SnortConsolatedTrafficEntry().from_dict(value)
+            self.update_or_append_cte(cte)
+
+        # Finally, zero out the internal traffic reports
+        self.traffic_entries = []
+        gc.collect()
+
+    def update_or_append_cte(self, new_cte):
+        '''Updates or appends a CTE object to this traffic report'''
+
+        dict_hash = new_cte.dict_key()
+        inverse_dict_hash = new_cte.inverse_dict_key()
+
+        if dict_hash in self.consolated_traffic:
+            self.consolated_traffic[dict_hash].merge(new_cte)
+            return
+
+        # See if the inverse key is there
+        elif inverse_dict_hash in self.consolated_traffic:
+            self.consolated_traffic[inverse_dict_hash].merge(new_cte)
+            return
+        else:
+            # Else add it
+            self.consolated_traffic[dict_hash] = new_cte
 
     def append_log(self, logfile):
         '''Parses an individual log file, and appends it to this traffic log'''
@@ -175,13 +203,70 @@ class SnortConsolatedTrafficEntry(object):
         self.firstseen = None
         self.proto = None
         self.src = None
-        self.srcport = None
         self.dst = None
-        self.dstport = None
         self.ethsrc = None
         self.ethdst = None
         self.rxpackets = 0
         self.txpackets = 0
+
+    def dict_key(self):
+        '''Creates a hash of this object'''
+        return hash(
+            (self.proto, self.src, self.dst, self.ethsrc, self.ethdst)
+        )
+
+    def inverse_dict_key(self):
+        '''Creates the inverted hash of this object'''
+        return hash(
+            (self.proto, self.dst, self.src, self.ethdst, self.ethsrc)
+        )
+
+    def is_match(self, other):
+        '''Determines if the CTEs match each other in some way'''
+        if (self.is_same(other) is True or
+                self.is_inverse(other) is True):
+            return True
+
+        return False
+
+    def is_same(self, other):
+        '''Determines if a CTE is the same'''
+        if (self.proto == other.proto and
+                self.src == other.src and
+                self.dst == other.dst and
+                self.ethsrc == other.ethsrc and
+                self.ethdst == other.ethdst):
+            return True
+
+        return False
+
+    def is_inverse(self, other):
+        '''Determines if a CTE is an invert of the other'''
+        if (self.proto == other.proto and
+                self.src == other.dst and
+                self.dst == other.src and
+                self.ethsrc == other.ethdst and
+                self.ethdst == other.ethsrc):
+            return True
+
+        # Nope, not a match
+        return False
+
+    def merge(self, other):
+        '''Merges two CTEs into one if they're equal to each other'''
+
+        if self.is_same(other):
+            self.rxpackets += other.rxpackets
+            self.txpackets += other.txpackets
+        elif self.is_inverse(other):
+            self.rxpackets += other.txpackets
+            self.txpackets += other.rxpackets
+        else:
+            raise ValueError("CTE objects are not the same or inverse of each other!")
+
+        # Update first seen if it's older
+        if other.firstseen < self.firstseen:
+            self.firstseen = other.firstseen
 
     def to_dict(self):
         '''Creates a serialiable dict of the consolated traffic log'''
@@ -191,9 +276,7 @@ class SnortConsolatedTrafficEntry(object):
         cte_dict['src'] = self.src.compressed
 
         # Again, these values can be optional
-        cte_dict['srcport'] = self.srcport
         cte_dict['dst'] = self.dst.compressed
-        cte_dict['dstport'] = self.dstport
 
         cte_dict['ethsrc'] = self.ethsrc
         cte_dict['ethdst'] = self.ethdst
@@ -209,14 +292,7 @@ class SnortConsolatedTrafficEntry(object):
         cte.proto = ndr.PortProtocols(cte_dict['proto'])
         cte.src = ipaddress.ip_address(cte_dict['src'])
 
-        # These values can be optional
-        if cte_dict['srcport'] is not None:
-            cte.srcport = int(cte_dict['srcport'])
-
         cte.dst = ipaddress.ip_address(cte_dict['dst'])
-
-        if cte_dict['dstport'] is not None:
-            cte.dstport = int(cte_dict['dstport'])
 
         cte.ethsrc = cte_dict['ethsrc']
         cte.ethdst = cte_dict['ethdst']

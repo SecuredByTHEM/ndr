@@ -36,8 +36,6 @@ class SnortTrafficTest(unittest.TestCase):
                 continue
 
             self.assertEqual(entry['src'], '192.168.2.3')
-            self.assertEqual(entry['dstport'], 58724)
-            self.assertEqual(entry['srcport'], 22)
             self.assertEqual(entry['ethdst'], '30:85:A9:3C:9D:99')
             self.assertEqual(entry['ethsrc'], '84:39:BE:64:3F:E5')
             self.assertEqual(entry['rxpackets'], 48)
