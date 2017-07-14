@@ -62,11 +62,8 @@ def main():
                     # Delete the log file after we're done with it
                     os.remove(logfile)
 
-    print("Finished")
-    while True:
-        pass
-    #snort_traffic_log.sign_report()
-    #snort_traffic_log.load_into_queue()
+    snort_traffic_log.sign_report()
+    snort_traffic_log.load_into_queue()
 
 if __name__ == '__main__':
     main()
