@@ -22,6 +22,7 @@ in a loop reading from stdin'''
 
 import sys
 import traceback
+import time
 
 import yaml
 import ndr
@@ -54,6 +55,9 @@ def main():
             trace = traceback.format_exc()
             logger.error("alertd died with error: %s", trace)
             logger.error("Tried to process %s", syslog_message)
+
+        # Wait ten seconds before trying to read again
+        time.sleep(10)
 
 if __name__ == "__main__":
     main()
