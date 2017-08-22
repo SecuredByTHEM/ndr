@@ -12,7 +12,7 @@ install:
   - pip install git+https://github.com/SecuredByTHEM/ndr-netcfg.git
 
 script:
-  - coverage run --source=ndr setup.py test
+  - sudo /bin/bash -c "source ~/virtualenv/python3.5/bin/activate && python -m coverage run --source=ndr setup.py test"
 #  - python3 setup.py test
 
 after_success:

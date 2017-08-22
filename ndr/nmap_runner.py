@@ -27,13 +27,22 @@ from enum import Enum
 
 import ndr
 import ndr_netcfg
+import yaml
 
 class NmapConfig(object):
     '''Holds the configuration for NMAP scans'''
-    def __init__(self, netcfg_file='/persistant/etc/ndr/network_config.yml'):
+    def __init__(self, 
+                 netcfg_file='/persistant/etc/ndr/network_config.yml',
+                 nmap_cfgfile='/persistant/etc/ndr/nmap_config.yml'):
         self.scan_interfaces = []
         self.networks_to_scan = []
-        self.blacklisted_hosts = []
+        self.nmap_cfgfile = nmap_cfgfile
+
+        # Handle our blacklists here.
+        self.basic_only_ips = []
+        self.basic_only_macs = []
+        self.blacklist_ips = []
+        self.blacklist_macs = []
 
         # Pull our interfaces from the NDR network configuration
         netcfg = ndr_netcfg.NetworkConfiguration(netcfg_file)
@@ -52,6 +61,54 @@ class NmapConfig(object):
                 self.networks_to_scan.append(
                     addr.ip_network()
                 )
+
+    def to_dict(self):
+        '''Persistant storage of blacklists - may expand in the future'''
+        config_dict = {}
+
+        # Basic Only means we port scan but don't run with -A
+        config_dict['basic_only_ips'] = []
+        config_dict['basic_only_macs'] = []
+
+        # Blacklist means we don't do a portscan or protocol scan
+        config_dict['blacklist_ips'] = []
+        config_dict['blacklist_macs'] = []
+
+        for ip_addr in self.basic_only_ips:
+            config_dict['basic_only_ips'] = ip_addr.compressed
+
+        for ip_addr in self.basic_only_ips:
+            config_dict['blacklist_ips'] = ip_addr.compressed
+
+        config_dict['basic_only_macs'] = self.basic_only_macs
+        config_dict['blacklist_macs'] = self.blacklist_macs
+
+        return config_dict
+
+    def from_dict(self, config_dict):
+        '''Load persistant storage file'''
+        # Load the easy objects first
+        self.basic_only_macs = config_dict['basic_only_macs']
+        self.blacklist_macs = config_dict['blacklist_macs']
+
+        # Clean out the IP lists
+        self.basic_only_ips = []
+        self.blacklist_ips = []
+
+        for ip_addr in config_dict['basic_only_ips']:
+            self.basic_only_ips.append(
+                ipaddress.ip_address(ip_addr)
+            )
+
+        for ip_addr in config_dict['blacklist_ips']:
+            self.blacklist_ips.append(
+                ipaddress.ip_address(ip_addr)
+            )
+
+    def write(self):
+        '''Writes out the persistant configuration file'''
+        with open(self.nmap_cfgfile, 'w') as f:
+            f.write(yaml.safe_dump(self.to_dict()))
 
 class NmapRunner(object):
 

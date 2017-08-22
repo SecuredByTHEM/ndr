@@ -84,7 +84,7 @@ class Config:
         else:
             raise ValueError("Unknown or missing upload method")
 
-        self.ndr_netconfig = config_dict.get('netcfg_file', '/persistant/etc/ndr/network_config.yml')
+        self.ndr_netconfig_file = config_dict.get('netcfg_file', '/persistant/etc/ndr/network_config.yml')
 
         # Required for keeping SNORT traffic logs sane
         if 'snort' not in config_dict:
@@ -93,6 +93,10 @@ class Config:
 
         self.image_timestamp_file = config_dict.get('image_timestamp_file',
                                                     '/image.timestamp')
+
+        if 'nmap' not in config_dict:
+            config_dict['nmap'] = {}
+        self.nmap_configuration_file = config_dict['nmap'].get('config', '/persistant/etc/ndr/nmap_config.yml')
 
     def get_image_version(self):
         '''Tries to load the image revision file'''

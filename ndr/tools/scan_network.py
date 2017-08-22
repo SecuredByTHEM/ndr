@@ -24,11 +24,19 @@ import ndr
 
 def main():
     '''Starts the scan network'''
+
+    # We need the NDR Network config for this scan
+    ndr_config = ndr.Config('/etc/ndr/config.yml')
+
     parser = argparse.ArgumentParser(
         description="Intelligently scans the network with NMAP")
     parser.add_argument('--net-config',
-                        default='/persistant/etc/ndr/network_config.yml',
+                        default=ndr_config.ndr_netconfig_file,
                         help='Network Configuration File')
+
+    parser.add_argument('--nmap-config',
+                        default=ndr_config.nmap_configuration_file,
+                        help='NMAP Configuration File')
 
     # Load in the NDR configuration
     args = parser.parse_args()
@@ -37,8 +45,6 @@ def main():
         print("ERROR: must be run as root")
         return
 
-    # We need the NDR Network config for this scan
-    ndr_config = ndr.Config('/etc/ndr/config.yml')
     nmap_config = ndr.NmapConfig(args.net_config)
     nmap_runner = ndr.NmapRunner(ndr_config, nmap_config)
 
