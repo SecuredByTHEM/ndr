@@ -31,7 +31,7 @@ import yaml
 
 class NmapConfig(object):
     '''Holds the configuration for NMAP scans'''
-    def __init__(self, 
+    def __init__(self,
                  netcfg_file='/persistant/etc/ndr/network_config.yml',
                  nmap_cfgfile='/persistant/etc/ndr/nmap_config.yml'):
         self.scan_interfaces = []
@@ -62,50 +62,80 @@ class NmapConfig(object):
                     addr.ip_network()
                 )
 
+        # This config file is optional so it's non-fatal if we don't find it
+        try:
+            with open(nmap_cfgfile, 'r') as f:
+                config_dict = f.read()
+                cfg_dict = yaml.safe_load(config_dict)
+                if cfg_dict is not None: # What happens when pyYAML reads an empty file
+                    self.from_dict(cfg_dict)
+
+        except FileNotFoundError:
+            self.nmap_cfgfile = None
+
     def to_dict(self):
         '''Persistant storage of blacklists - may expand in the future'''
         config_dict = {}
 
         # Basic Only means we port scan but don't run with -A
-        config_dict['basic_only_ips'] = []
-        config_dict['basic_only_macs'] = []
+        config_dict['version'] = 1
 
-        # Blacklist means we don't do a portscan or protocol scan
-        config_dict['blacklist_ips'] = []
-        config_dict['blacklist_macs'] = []
+        # Machines are listed by key/value pairs under the machine_mac dict
+        # or the machine_ip dict for the behavior wanted
+
+        # Supported keywords as of right now as blacklist or basic_only
+        machine_mac = {}
+        machine_ip = {}
+
+        for mac_address in self.basic_only_macs:
+            machine_mac[mac_address] = NmapMachineMode.BASIC_ONLY.value
+
+        for mac_address in self.blacklist_macs:
+            machine_mac[mac_address] = NmapMachineMode.BLACKLIST.value
 
         for ip_addr in self.basic_only_ips:
-            config_dict['basic_only_ips'] = ip_addr.compressed
+            machine_ip[ip_addr.compressed] = NmapMachineMode.BASIC_ONLY.value
 
-        for ip_addr in self.basic_only_ips:
-            config_dict['blacklist_ips'] = ip_addr.compressed
+        for ip_addr in self.blacklist_ips:
+            machine_ip[ip_addr.compressed] = NmapMachineMode.BLACKLIST.value
 
-        config_dict['basic_only_macs'] = self.basic_only_macs
-        config_dict['blacklist_macs'] = self.blacklist_macs
+        config_dict['machine_ips'] = machine_ip
+        config_dict['machine_macs'] = machine_mac
 
         return config_dict
 
     def from_dict(self, config_dict):
-        '''Load persistant storage file'''
+        '''Load settings from dictionary'''
         # Load the easy objects first
-        self.basic_only_macs = config_dict['basic_only_macs']
-        self.blacklist_macs = config_dict['blacklist_macs']
+        if config_dict.get('version', None) != 1:
+            raise ValueError("Unknown NDR NMAP config file version!")
 
         # Clean out the IP lists
         self.basic_only_ips = []
         self.blacklist_ips = []
+        self.basic_only_macs = []
+        self.blacklist_macs = []
 
-        for ip_addr in config_dict['basic_only_ips']:
-            self.basic_only_ips.append(
-                ipaddress.ip_address(ip_addr)
-            )
+        machine_ips = config_dict.get('machine_ips', dict())
+        machine_macs = config_dict.get('machine_macs', dict())
 
-        for ip_addr in config_dict['blacklist_ips']:
-            self.blacklist_ips.append(
-                ipaddress.ip_address(ip_addr)
-            )
+        # Load in the machine IP addresses
+        for ip_addr, value in machine_ips.items():
+            enum_value = NmapMachineMode(value)
+            if enum_value == NmapMachineMode.BASIC_ONLY:
+                self.basic_only_ips.append(ipaddress.ip_address(ip_addr))
+            elif enum_value == NmapMachineMode.BLACKLIST:
+                self.blacklist_ips.append(ipaddress.ip_address(ip_addr))
 
-    def write(self):
+        # Now do it again with the MAC addresses
+        for mac_addr, value in machine_macs.items():
+            enum_value = NmapMachineMode(value)
+            if enum_value == NmapMachineMode.BASIC_ONLY:
+                self.basic_only_macs.append(mac_addr)
+            elif enum_value == NmapMachineMode.BLACKLIST:
+                self.blacklist_macs.append(mac_addr)
+
+    def write_configuration(self):
         '''Writes out the persistant configuration file'''
         with open(self.nmap_cfgfile, 'w') as f:
             f.write(yaml.safe_dump(self.to_dict()))
@@ -294,3 +324,8 @@ class NmapScanTypes(Enum):
     PORT_SCAN = "port-scan"
     SERVICE_DISCOVERY = "service-discovery"
     ND_DISCOVERY = "nd-discovery"
+
+class NmapMachineMode(Enum):
+    '''Machine configurations recognized by NMAP Runner'''
+    BASIC_ONLY = "basic-only"
+    BLACKLIST = "blacklist"

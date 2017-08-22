@@ -1,0 +1,7 @@
+machine_ips:
+  192.168.2.123: basic-only
+  192.168.10.21: blacklist
+machine_macs:
+  AA:BB:CC:DD:EE:FF: blacklist
+  FF:EE:CC:DD:EE:AA: basic-only
+version: 1
