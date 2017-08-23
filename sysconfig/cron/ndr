@@ -10,5 +10,5 @@ MAILTO=""
 30 * * * *	root	/usr/sbin/logrotate -f /etc/logrotate.d/ndr
 45 * * * *	root	ndr-scan-network
 15 * * * *	root	ndr-snort-traffic-uploader /persistant/snort/all-traffic
-*/5 * * * *	root	ndr-status-updater
+*/5 * * * *	root	ndr-status-uploader
 
