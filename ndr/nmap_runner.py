@@ -207,14 +207,28 @@ class NmapRunner(object):
                              "-6 -R -sn -e %s --script=targets-ipv6-multicast-* --script-args=newtargets"
                              % (interface), None)
 
-    def basic_host_scan(self, network):
-        '''Does a basic port scan by hosts'''
+    def build_nmap_commandline(self, base_flags, address, interface=None):
+        '''Builds common NMAP option command lines'''
+        ipaddr = ipaddress.ip_address(address)
+
 
         # Several bits of magic are required here
         # 1. If we're v6 address or range, we need -6
         # 2. If we're link-local, we need to specify the interface
 
-        return self.run_scan(NmapScanTypes.PORT_SCAN, "-sS", network)
+        options = base_flags
+        if ipaddr.version == 6:
+            options = "-6 " + options
+        if ipaddr.is_link_local:
+            options = "-e " + interface + " " + options
+
+        return options
+
+    def basic_host_scan(self, address, interface=None):
+        '''Does a basic port scan by hosts'''
+
+        options = self.build_nmap_commandline("-sS", address, interface)
+        return self.run_scan(NmapScanTypes.PORT_SCAN, options, address)
 
     def protocol_scan(self, network):
         '''Scans the network to determine what, if any IP protocols are supported'''
@@ -227,14 +241,7 @@ class NmapRunner(object):
     def indepth_host_scan(self, address, interface=None):
         '''Does a full discovery scan'''
 
-        base_nmap_options = "-sS -A -T4"
-        ipaddr = ipaddress.ip_address(address)
-
-        options = base_nmap_options
-        if ipaddr.version == 6:
-            options = "-6 " + options
-        if ipaddr.is_link_local:
-            options = "-e " + interface + " " + options
+        options = self.build_nmap_commandline("-sS -A -T4", address, interface)
         return self.run_scan(NmapScanTypes.SERVICE_DISCOVERY, options, address)
 
     def run_network_scans(self):
@@ -243,7 +250,7 @@ class NmapRunner(object):
         def process_and_send_scan(scan, interface=None):
             '''Appends a list of IP addresses to scan further down the line'''
             hosts_in_scan = []
-            for found_ip in scan.full_ip_list():
+            for found_ip in scan.full_ip_and_mac_list():
                 logger.debug("Discovered host %s", found_ip)
                 hosts_in_scan.append((found_ip, interface))
 
@@ -265,6 +272,12 @@ class NmapRunner(object):
 
         # First we need to generate a list of everything we can detect link local
         logger.info("== Running NMap Network Scan ==")
+
+        if self.nmap_config.nmap_cfgfile is not None:
+            logger.info("Using config file %s", self.nmap_config.nmap_cfgfile)
+        else:
+            logger.info("No configuration file, using defaults")
+
         logger.info("Phase 1: Link-Local Discovery")
 
         discovered_hosts = []
@@ -294,25 +307,57 @@ class NmapRunner(object):
 
 
         # Now we need to figure out what protocols each host supports
-        logger.info("Phase 3: Protocol Discovery")
-        for network in networks_to_scan:
+        logger.info("Phase 3: Machine Scanning")
+
+        for host_tuple in discovered_hosts:
+            # Now we need to build a list of what to scan vs. what not to. Right now
+            # we've got the IP address and the MAC addr of each host, so now if they are
+            # blacklisted, then we bail out
+            host_ip = host_tuple[0][0]
+            mac_address = host_tuple[0][1]
+            interface = host_tuple[1]
+
+
             # FIXME: We should use protocol discovery here and refine our scans based on it, but
             # at the moment, that requires a fair bit of additional code to be written, so we'll
             # address it later
 
+            # Determine if we need to skip stuff due to a blacklist
+            if ipaddress.ip_address(host_ip) in self.nmap_config.blacklist_ips:
+                logger.info("Skipping IP %s due to blacklist", host_ip)
+                continue
+
+            if mac_address in self.nmap_config.blacklist_macs:
+                logger.info("Skipping IP %s due to MAC %s blacklist", host_ip, mac_address)
+                continue
+
+            basic_scan = False
+
+            if ipaddress.ip_address(host_ip) in self.nmap_config.basic_only_ips:
+                logger.info("Degrading %s to basic scan due to NMAP config", host_ip)
+                basic_scan = True
+
+            if mac_address in self.nmap_config.basic_only_macs:
+                logger.info("Degrading %s to basic scan due to NMAP config", host_ip)
+                basic_scan = True
+
             # For now, we'll simply do a protocol scan so we can get an idea of what exists
             # out there in the wild
-            logger.debug("Running protocol scan on %s", network)
-            protocol_scan = self.protocol_scan(network)
+            logger.debug("Running protocol scan on %s", host_ip)
+            protocol_scan = self.protocol_scan(host_ip)
             process_and_send_scan(protocol_scan)
 
-        # Now begin in-depth scanning of things. If a host is blacklisted,
-        # then it's noted and skipped at this point
+            # Now begin in-depth scanning of things. If a host is blacklisted,
+            # then it's noted and skipped at this point
 
-        logger.info("Phase 4: Host Scanning")
-        for host_tuple in discovered_hosts:
-            logger.info("In-depth scanning %s", host_tuple[0])
-            host_scan = self.indepth_host_scan(host_tuple[0], host_tuple[1])
+            logger.info("Phase 4: Host Scanning")
+
+            if basic_scan is True:
+                logger.info("Basic scanning %s", host_ip)
+                host_scan = self.basic_host_scan(host_ip, interface)
+            else:
+                logger.info("In-depth scanning %s", host_ip)
+                host_scan = self.indepth_host_scan(host_ip, interface)
             process_and_send_scan(host_scan)
 
 class NmapScanTypes(Enum):
