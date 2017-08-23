@@ -26,6 +26,7 @@ import ndr
 # Testing data from a live system running syslog-ng in JSON reporting mode
 THIS_DIR = os.path.dirname(os.path.abspath(__file__))
 NDR_CONFIG = THIS_DIR + '/data/test_config.yml'
+IMAGE_CONFIG = THIS_DIR + '/data/image_info.yml'
 NMAP_CONFIG = THIS_DIR + "/data/nmap_config.yml"
 
 class StatusTest(unittest.TestCase):
@@ -37,6 +38,7 @@ class StatusTest(unittest.TestCase):
         cls._current_time = int(time.time())
 
         cls._ncc = ndr.Config(NDR_CONFIG)
+        cls._ncc.image_information_file = IMAGE_CONFIG
 
         # Create a temporary file for the OTA timestamp
         file_descriptor, cls._ota_timestamp = tempfile.mkstemp()
@@ -53,8 +55,10 @@ class StatusTest(unittest.TestCase):
 
     def test_ota_version_read(self):
         '''Tests OTA reading in the config'''
-        config_ver = self._ncc.get_image_version()
-        self.assertEqual(config_ver, self._current_time)
+        image_tuple = self._ncc.get_image_version()
+
+        self.assertEqual(image_tuple.build_date, 1502855552)
+        self.assertEqual(image_tuple.image_type, 'development')
 
     def test_dict_serialization_no_files(self):
         '''Tests exporting to dict form with no files'''
@@ -65,8 +69,11 @@ class StatusTest(unittest.TestCase):
         status_message = ndr.StatusMessage(self._ncc)
         status_message.populate_status_information()
 
+        image_tuple = self._ncc.get_image_version()
         status_dict = status_message.to_dict()
-        self.assertEqual(status_dict['software_revision'], self._current_time)
+
+        self.assertEqual(status_dict['image_build_date'], image_tuple.build_date)
+        self.assertEqual(status_dict['image_type'], image_tuple.image_type)
 
         # The status file shouldn't be present so files revision should be an empty dict
         self.assertNotIn('config_file_versions', status_dict)
@@ -80,8 +87,11 @@ class StatusTest(unittest.TestCase):
         status_message = ndr.StatusMessage(self._ncc)
         status_message.populate_status_information()
 
+        image_tuple = self._ncc.get_image_version()
         status_dict = status_message.to_dict()
-        self.assertEqual(status_dict['software_revision'], self._current_time)
+
+        self.assertEqual(status_dict['image_build_date'], image_tuple.build_date)
+        self.assertEqual(status_dict['image_type'], image_tuple.image_type)
 
         nmap_config_hash = ndr.StatusMessage.hash_file(NMAP_CONFIG)
         self.assertEqual(status_dict['config_file_versions']['nmap_config'], nmap_config_hash)
@@ -90,9 +100,11 @@ class StatusTest(unittest.TestCase):
         '''Tests that a dict is properly deserialized'''
 
         status_dict = {}
-        status_dict['software_revision'] = self._current_time
+        status_dict['image_build_date'] = self._current_time
+        status_dict['image_type'] = 'testing'
 
         status_message = ndr.StatusMessage(self._ncc)
         status_message.from_dict(status_dict)
 
-        self.assertEqual(status_message.software_revision, self._current_time)
+        self.assertEqual(status_message.image_build_date, self._current_time)
+        self.assertEqual(status_message.image_type, 'testing')

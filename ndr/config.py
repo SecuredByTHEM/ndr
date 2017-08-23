@@ -25,12 +25,17 @@ import sys
 import socket
 import logging
 import logging.handlers
+import collections
 
 import yaml
 
 # pylint: disable=R0902
 # The config method handles global state information from the config file
 # and is used as a global object.
+
+ImageInformation = collections.namedtuple(
+    'ImageInformation', 'build_date image_type'
+)
 
 class Config:
     '''Handles global configuration information for NDR'''
@@ -91,20 +96,26 @@ class Config:
             config_dict['snort'] = {}
         self.snort_monitor_port = config_dict['snort'].get('monitor_port', 'monitor0')
 
-        self.image_timestamp_file = config_dict.get('image_timestamp_file',
-                                                    '/image.timestamp')
-
         if 'nmap' not in config_dict:
             config_dict['nmap'] = {}
         self.nmap_configuration_file = config_dict['nmap'].get('config', '/persistant/etc/ndr/nmap_config.yml')
 
+        self.image_information_file = "/etc/ndr/image_info.yml"
+
     def get_image_version(self):
         '''Tries to load the image revision file'''
         try:
-            with open(self.image_timestamp_file, 'r') as ts_file:
-                return int(ts_file.read())
+            with open(self.image_information_file, 'r') as ii_file:
+                image_dict = yaml.safe_load(ii_file.read())
+                image_info = ImageInformation(
+                    build_date=image_dict['build_date'],
+                    image_type=image_dict['image_type']
+                )
+
+                return image_info
+
         except: # pylint: disable=W0702
-            self.logger.error('Failed to get image timestamp file!')
+            self.logger.error('Failed to get image information file!')
             return None
 
     @property

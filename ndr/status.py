@@ -23,7 +23,8 @@ import ndr
 class StatusMessage(ndr.IngestMessage):
     '''Creates status messages to the server'''
     def __init__(self, config=None):
-        self.software_revision = None
+        self.image_build_date = None
+        self.image_type = None
         self.files_revision = None
 
         ndr.IngestMessage.__init__(
@@ -54,7 +55,9 @@ class StatusMessage(ndr.IngestMessage):
         '''Populates the status information fields from the currently running image'''
 
         # First, get the easy bit first, which image version
-        self.software_revision = self.config.get_image_version()
+        image_info = self.config.get_image_version()
+        self.image_build_date = image_info.build_date
+        self.image_type = image_info.image_type
 
         # Now let's look at updatable config files, and get the sha256 checksum of them.
         # if the file is MIA, then we don't report it.
@@ -81,7 +84,8 @@ class StatusMessage(ndr.IngestMessage):
     def to_dict(self):
         '''Prepares a status message for serialization.'''
         status_dict = {}
-        status_dict['software_revision'] = self.software_revision
+        status_dict['image_build_date'] = self.image_build_date
+        status_dict['image_type'] = self.image_type
 
         if self.files_revision is not None:
             status_dict['config_file_versions'] = self.files_revision
@@ -91,7 +95,8 @@ class StatusMessage(ndr.IngestMessage):
     def from_dict(self, status_dict):
         '''Deserializes the status message'''
 
-        self.software_revision = status_dict['software_revision']
+        self.image_build_date = status_dict.get('image_build_date', None)
+        self.image_type = status_dict.get('image_type', None)
         self.files_revision = status_dict.get('config_file_versions', None)
 
 class NdrConfigurationFiles(Enum):
