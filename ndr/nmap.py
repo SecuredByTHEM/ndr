@@ -170,12 +170,12 @@ class NmapScan(ndr.IngestMessage):
 
         return None
 
-    def full_ip_list(self):
-        '''Returns a list of all IP addresses found in this scan'''
+    def full_ip_and_mac_list(self):
+        '''Returns a list of all IP/MACs addresses found in this scan'''
 
         full_ip_list = []
         for host in self.hosts:
-            full_ip_list.append(host.addr)
+            full_ip_list.append((host.addr, host.mac_address))
 
         return full_ip_list
 

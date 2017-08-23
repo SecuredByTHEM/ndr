@@ -24,30 +24,30 @@ import ipaddress
 
 from pyroute2 import IPRoute # pylint: disable=E0611
 
+import yaml
+
 import ndr
 import ndr_netcfg
 
 # Testing data from a live system running syslog-ng in JSON reporting mode
 THIS_DIR = os.path.dirname(os.path.abspath(__file__))
-
+NMAP_CONFIG = THIS_DIR + "/data/nmap_config.yml"
 
 @unittest.skipIf(os.getuid() != 0, "must be root")
-class TestNmapConfig(unittest.TestCase):
+class TestNmapConfigRoot(unittest.TestCase):
 
     '''Tests Nmap Configuration by creating a fake interface and confirming scan results'''
 
     def setUp(self):
         self._iproute = IPRoute()
 
-        # Unfortunately, when creating dummy interfaces, you'll end up with an
-        # interface named dummyX no matter what you do
-        self._iproute.link('add', name='dummy0', kind='dummy')
-        self._iproute.link('add', name='dummy1', kind='dummy')
-        self._iproute.link('add', name='dummy2', kind='dummy')
+        self._iproute.link('add', ifname='lan127', kind='dummy')
+        self._iproute.link('add', ifname='monitor234', kind='dummy')
+        self._iproute.link('add', ifname='lan322', kind='dummy')
 
-        self._dummy0_idx = self._iproute.link_lookup(ifname='dummy0')[0]
-        self._dummy1_idx = self._iproute.link_lookup(ifname='dummy1')[0]
-        self._dummy2_idx = self._iproute.link_lookup(ifname='dummy2')[0]
+        self._dummy0_idx = self._iproute.link_lookup(ifname='lan127')[0]
+        self._dummy1_idx = self._iproute.link_lookup(ifname='monitor234')[0]
+        self._dummy2_idx = self._iproute.link_lookup(ifname='lan322')[0]
 
         fd, self._scratch_config = tempfile.mkstemp()
         os.close(fd) # Don't need to write anything to it
@@ -71,16 +71,13 @@ class TestNmapConfig(unittest.TestCase):
         '''Sets up interfaces for most tests'''
 
         nc = ndr_netcfg.NetworkConfiguration(config_file)
-        nc.rename_interface("dummy0", "lan127")
         nc.set_configuration_method("lan127", ndr_netcfg.InterfaceConfigurationMethods.STATIC)
         nc.add_static_addr("lan127", "10.1.177.2", 24)
 
-        nc.rename_interface("dummy1", "monitor234")
         nc.set_configuration_method("monitor234", ndr_netcfg.InterfaceConfigurationMethods.STATIC)
         nc.add_static_addr("monitor234", "10.2.177.2", 24)
 
         # Create an IPv6 enabled interface
-        nc.rename_interface("dummy2", "lan322")
         nc.set_configuration_method("lan322", ndr_netcfg.InterfaceConfigurationMethods.STATIC)
         nc.add_static_addr("lan322", "192.168.17.2", 28)
         nc.add_static_addr("lan322", "fdd1:2013:2f69:388f::122", 64)
@@ -105,3 +102,60 @@ class TestNmapConfig(unittest.TestCase):
         self.assertIn(ipaddress.ip_network("192.168.17.0/28"), nmap_cfg.networks_to_scan)
         self.assertIn(ipaddress.ip_network("fdd1:2013:2f69:388f::/64"), nmap_cfg.networks_to_scan)
         self.assertNotIn(ipaddress.ip_network("10.2.177.0/24"), nmap_cfg.networks_to_scan)
+
+class TestNmapConfig(unittest.TestCase):
+    '''Handles non-root tests for testing NMAP Config'''
+    def setUp(self):
+        fd, self._scratch_config = tempfile.mkstemp()
+        os.close(fd) # Don't need to write anything to it
+
+    def tearDown(self):
+        os.remove(self._scratch_config)
+
+    def test_to_dict(self):
+        '''Tests serialization to dict'''
+        nmap_cfg = ndr.NmapConfig(self._scratch_config)
+        nmap_cfg.basic_only_ips.append(ipaddress.ip_address("192.168.2.123"))
+        nmap_cfg.blacklist_ips.append(ipaddress.ip_address("192.168.10.21"))
+        nmap_cfg.basic_only_macs.append("FF:EE:CC:DD:EE:AA")
+        nmap_cfg.blacklist_macs.append("AA:BB:CC:DD:EE:FF")
+
+        cfg_dict = nmap_cfg.to_dict()
+        self.assertEqual(cfg_dict['version'], 1)
+        self.assertEqual(cfg_dict['machine_ips']['192.168.2.123'], 'basic-only')
+        self.assertEqual(cfg_dict['machine_ips']['192.168.10.21'], 'blacklist')
+        self.assertEqual(cfg_dict['machine_macs']['FF:EE:CC:DD:EE:AA'], 'basic-only')
+        self.assertEqual(cfg_dict['machine_macs']['AA:BB:CC:DD:EE:FF'], 'blacklist')
+
+    def test_load_from_file(self):
+        '''NMAP runner should load it's configuration right from the get go as the second arg'''
+        nmap_cfg = ndr.NmapConfig(netcfg_file=self._scratch_config,
+                                  nmap_cfgfile=NMAP_CONFIG)
+
+        self.assertIn(ipaddress.ip_address("192.168.2.123"), nmap_cfg.basic_only_ips)
+        self.assertIn(ipaddress.ip_address("192.168.10.21"), nmap_cfg.blacklist_ips)
+        self.assertIn("FF:EE:CC:DD:EE:AA", nmap_cfg.basic_only_macs)
+        self.assertIn("AA:BB:CC:DD:EE:FF", nmap_cfg.blacklist_macs)
+
+    def test_write_to_file(self):
+        '''Tests writing out the NMAP configuration to file'''
+        fd, out_file = tempfile.mkstemp()
+        os.close(fd) # Don't need to write anything to it
+
+        nmap_cfg = ndr.NmapConfig(netcfg_file=self._scratch_config,
+                                  nmap_cfgfile=out_file)
+
+        nmap_cfg.basic_only_ips.append(ipaddress.ip_address("192.168.2.123"))
+        nmap_cfg.blacklist_ips.append(ipaddress.ip_address("192.168.10.21"))
+        nmap_cfg.basic_only_macs.append("FF:EE:CC:DD:EE:AA")
+        nmap_cfg.blacklist_macs.append("AA:BB:CC:DD:EE:FF")
+        nmap_cfg.write_configuration()
+
+        # Read the config file back in as a YAML file
+        with open(out_file, 'r') as f:
+            contents = f.read()
+            #print(contents)
+            written_dict = yaml.safe_load(contents)
+
+        self.assertEqual(written_dict, nmap_cfg.to_dict())
+        os.remove(out_file)

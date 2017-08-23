@@ -21,12 +21,10 @@ import ndr
 def main():
     '''Entry point'''
     ndr_config = ndr.Config('/etc/ndr/config.yml')
-    ingest_message = ndr.IngestMessage(
-        ndr_config, ndr.IngestMessageTypes.STATUS
-    )
+    status_message = ndr.StatusMessage(ndr_config)
 
-    ingest_message.sign_report()
-    ingest_message.load_into_queue()
+    status_message.sign_report()
+    status_message.load_into_queue()
 
 if __name__ == "__main__":
-	main()
+    main()

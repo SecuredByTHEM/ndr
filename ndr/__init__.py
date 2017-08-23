@@ -39,7 +39,7 @@ from ndr.nmap import (NmapHost,
                       NmapOsClass,
                       NmapReasons,
                      )
-from ndr.status import StatusMessage
+from ndr.status import StatusMessage, NdrConfigurationFiles
 from ndr.nmap_runner import NmapRunner, NmapConfig, NmapScanTypes
 from ndr.snort_traffic import SnortTrafficLog, SnortTrafficEntry
 from ndr.cert_request import CertificateRequest, CertificateRequestTypes
