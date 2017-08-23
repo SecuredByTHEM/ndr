@@ -33,6 +33,8 @@ class StatusMessage(ndr.IngestMessage):
     def from_message(self, ingest_msg: ndr.IngestMessage):
         '''Converts an ingest message to a Status message record'''
         super().from_message(ingest_msg)
+        self.from_dict(self.headers['payload'])
+
         return self
 
     @staticmethod
