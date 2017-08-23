@@ -26,6 +26,7 @@ import ndr
 # Testing data from a live system running syslog-ng in JSON reporting mode
 THIS_DIR = os.path.dirname(os.path.abspath(__file__))
 NDR_CONFIG = THIS_DIR + '/data/test_config.yml'
+NMAP_CONFIG = THIS_DIR + "/data/nmap_config.yml"
 
 class StatusTest(unittest.TestCase):
     '''Tests handling of status messages'''
@@ -55,13 +56,35 @@ class StatusTest(unittest.TestCase):
         config_ver = self._ncc.get_image_version()
         self.assertEqual(config_ver, self._current_time)
 
-    def test_dict_serialization(self):
-        '''Tests exporting to dict form'''
+    def test_dict_serialization_no_files(self):
+        '''Tests exporting to dict form with no files'''
+
+        # Override the config's file paths to non-existant ones
+        self._ncc.nmap_configuration_file = "/nonexistant/nonexist"
+
         status_message = ndr.StatusMessage(self._ncc)
         status_message.populate_status_information()
 
         status_dict = status_message.to_dict()
         self.assertEqual(status_dict['software_revision'], self._current_time)
+
+        # The status file shouldn't be present so files revision should be an empty dict
+        self.assertNotIn('config_file_versions', status_dict)
+
+        # Get the hash of the NMAP configuration
+    def test_dict_serialization_with_files(self):
+        '''Tests serializing files with filepaths actually set'''
+
+        self._ncc.nmap_configuration_file = NMAP_CONFIG
+
+        status_message = ndr.StatusMessage(self._ncc)
+        status_message.populate_status_information()
+
+        status_dict = status_message.to_dict()
+        self.assertEqual(status_dict['software_revision'], self._current_time)
+
+        nmap_config_hash = ndr.StatusMessage.hash_file(NMAP_CONFIG)
+        self.assertEqual(status_dict['config_file_versions']['nmap_config'], nmap_config_hash)
 
     def test_dict_deserialization(self):
         '''Tests that a dict is properly deserialized'''
