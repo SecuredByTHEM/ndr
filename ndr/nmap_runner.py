@@ -230,13 +230,11 @@ class NmapRunner(object):
         options = self.build_nmap_commandline("-sS", address, interface)
         return self.run_scan(NmapScanTypes.PORT_SCAN, options, address)
 
-    def protocol_scan(self, network):
+    def protocol_scan(self, address, interface=None):
         '''Scans the network to determine what, if any IP protocols are supported'''
-        nmap_flags = "-sO"
-        if network.version == 6:
-            nmap_flags = "-6" + nmap_flags
 
-        return self.run_scan(NmapScanTypes.IP_PROTOCOL_DETECTION, nmap_flags, network)
+        options = self.build_nmap_commandline("-sO", address, interface)
+        return self.run_scan(NmapScanTypes.IP_PROTOCOL_DETECTION, options, address)
 
     def indepth_host_scan(self, address, interface=None):
         '''Does a full discovery scan'''
@@ -344,7 +342,7 @@ class NmapRunner(object):
             # For now, we'll simply do a protocol scan so we can get an idea of what exists
             # out there in the wild
             logger.debug("Running protocol scan on %s", host_ip)
-            protocol_scan = self.protocol_scan(host_ip)
+            protocol_scan = self.protocol_scan(host_ip, interface)
             process_and_send_scan(protocol_scan)
 
             # Now begin in-depth scanning of things. If a host is blacklisted,
