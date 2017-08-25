@@ -310,6 +310,12 @@ class NmapRunner(object):
         # Now we need to figure out what protocols each host supports
         logger.info("Phase 3: Machine Scanning")
 
+        # HACK: quick and dirty deduplicate sorting. We can get multiple duplicates due to
+        # ndr-netcfg sometimes returning the same IP twice. How troublesome. Need to sort that
+        # out
+
+        discovered_hosts = list(set(discovered_hosts))
+
         for host_tuple in discovered_hosts:
             # Now we need to build a list of what to scan vs. what not to. Right now
             # we've got the IP address and the MAC addr of each host, so now if they are
