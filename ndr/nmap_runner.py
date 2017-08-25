@@ -341,9 +341,11 @@ class NmapRunner(object):
 
             # For now, we'll simply do a protocol scan so we can get an idea of what exists
             # out there in the wild
-            logger.debug("Running protocol scan on %s", host_ip)
-            protocol_scan = self.protocol_scan(host_ip, interface)
-            process_and_send_scan(protocol_scan)
+            
+            # MC - disabling protocol scan for now due to performance
+            #logger.debug("Running protocol scan on %s", host_ip)
+            #protocol_scan = self.protocol_scan(host_ip, interface)
+            #process_and_send_scan(protocol_scan)
 
             # Now begin in-depth scanning of things. If a host is blacklisted,
             # then it's noted and skipped at this point
