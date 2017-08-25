@@ -245,14 +245,17 @@ class NmapRunner(object):
     def run_network_scans(self):
         '''Runs a scan of a network and builds an iterative map of the network'''
 
-        def process_and_send_scan(scan, interface=None):
+        def process_and_send_scan(scan, interface=None, append=False):
             '''Appends a list of IP addresses to scan further down the line'''
             hosts_in_scan = []
             for found_ip in scan.full_ip_and_mac_list():
                 logger.debug("Discovered host %s", found_ip)
-                hosts_in_scan.append((found_ip, interface))
+                if append is True:
+                    hosts_in_scan.append((found_ip, interface))
+                    
+            if append is True:
+                logger.debug("Discovered %d hosts in total this scan", len(hosts_in_scan))
 
-            logger.debug("Discovered %d hosts in total this scan", len(hosts_in_scan))
             scan.sign_report()
             scan.load_into_queue()
 
@@ -286,7 +289,7 @@ class NmapRunner(object):
             logger.info("Performing IPv6 link-local discovery scan")
             ipv6_ll_scan = self.v6_link_local_scan(interface)
 
-            discovered_hosts += process_and_send_scan(ipv6_ll_scan, interface=interface)
+            discovered_hosts += process_and_send_scan(ipv6_ll_scan, interface=interface, append=True)
 
 
         logger.info("Phase 2: Network Discover")
@@ -296,12 +299,12 @@ class NmapRunner(object):
             if network.version == 4:
                 logger.info("Performing ARP host discovery on %s", network)
                 arp_discovery = self.arp_host_discovery_scan(network)
-                discovered_hosts += process_and_send_scan(arp_discovery)
+                discovered_hosts += process_and_send_scan(arp_discovery, append=True)
             else:
                 # IPv6
                 logger.info("Performing ND host discovery on %s", network)
                 nd_discovery = self.nd_host_discovery_scan(network)
-                discovered_hosts += process_and_send_scan(nd_discovery)
+                discovered_hosts += process_and_send_scan(nd_discovery, append=True)
 
 
         # Now we need to figure out what protocols each host supports
