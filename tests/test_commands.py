@@ -38,6 +38,7 @@ import ndr.tools.status
 THIS_DIR = os.path.dirname(os.path.abspath(__file__))
 NDR_CONFIG_FILE = THIS_DIR + '/data/test_config.yml'
 TEST_SYSLOG_DATA = THIS_DIR + '/data/test_log.json'
+IMAGE_CONFIG = THIS_DIR + '/data/image_info.yml'
 
 def create_temp_file(self):
     '''Creates scratch files as we need them'''
@@ -111,6 +112,7 @@ class TestCommands(unittest.TestCase):
         logging.getLogger().addHandler(logging.NullHandler())
         self._ncc = ndr.Config(NDR_CONFIG_FILE)
         self._ncc.logger = logging.getLogger()
+        self._ncc.image_information_file = IMAGE_CONFIG
 
         self._created_files = []
         config_ndr_for_signing_and_local_queue(self)
