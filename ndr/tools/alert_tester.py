@@ -17,10 +17,19 @@
 '''Causes an alert notification to happen on demand to make sure that a client is setup
    correctly during setup'''
 
+import argparse
+
 import ndr
 
 def main():
-    ndr_config = ndr.Config('/etc/ndr/config.yml')
+    parser = argparse.ArgumentParser(
+        description="Upload a status report to the server")
+    parser.add_argument('-c', '--config',
+                        default='/etc/ndr/config.yml',
+                        help='NDR Configuration File')
+    args = parser.parse_args()
+
+    ndr_config = ndr.Config(args.config)
     ingest_message = ndr.IngestMessage(
         ndr_config, ndr.IngestMessageTypes.TEST_ALERT
     )

@@ -21,7 +21,6 @@ import ndr
 
 def main():
     '''Entry point'''
-
     parser = argparse.ArgumentParser(
         description="Upload a status report to the server")
     parser.add_argument('-c', '--config',

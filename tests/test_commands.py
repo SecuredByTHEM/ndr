@@ -34,6 +34,7 @@ import yaml
 import ndr
 import ndr.tools.syslog_uploader
 import ndr.tools.status
+import ndr.tools.alert_tester
 
 THIS_DIR = os.path.dirname(os.path.abspath(__file__))
 NDR_CONFIG_FILE = THIS_DIR + '/data/test_config.yml'
@@ -184,3 +185,20 @@ class TestCommands(unittest.TestCase):
         os.remove(this_msg)
 
         self.assertEqual(loaded_msg.message_type, ndr.IngestMessageTypes.STATUS)
+
+    def test_alert_tester(self):
+        '''Tests alert tester messages'''
+        alert_tester_cli = ["alert_tester", "-c", self._ndr_config_file]
+        with unittest.mock.patch.object(sys, 'argv', alert_tester_cli):
+            ndr.tools.alert_tester.main()
+
+        # Make sure there's only one file in the queue
+        outbound_queue = os.listdir(self._ncc.outgoing_upload_spool)
+        self.assertEqual(len(outbound_queue), 1)
+        this_msg = self._ncc.outgoing_upload_spool + "/" + outbound_queue[0]
+
+        loaded_msg = ndr.IngestMessage.verify_and_load_message(
+            self._ncc, this_msg, only_accept_cn="ndr_test_suite")
+        os.remove(this_msg)
+
+        self.assertEqual(loaded_msg.message_type, ndr.IngestMessageTypes.TEST_ALERT)
