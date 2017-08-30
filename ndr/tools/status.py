@@ -16,11 +16,20 @@
 
 '''Creates status messages for NDR'''
 
+import argparse
 import ndr
 
 def main():
     '''Entry point'''
-    ndr_config = ndr.Config('/etc/ndr/config.yml')
+
+    parser = argparse.ArgumentParser(
+        description="Upload a status report to the server")
+    parser.add_argument('-c', '--config',
+                        default='/etc/ndr/config.yml',
+                        help='NDR Configuration File')
+    args = parser.parse_args()
+
+    ndr_config = ndr.Config(args.config)
     status_message = ndr.StatusMessage(ndr_config)
 
     status_message.sign_report()

@@ -33,6 +33,7 @@ import yaml
 
 import ndr
 import ndr.tools.syslog_uploader
+import ndr.tools.status
 
 THIS_DIR = os.path.dirname(os.path.abspath(__file__))
 NDR_CONFIG_FILE = THIS_DIR + '/data/test_config.yml'
@@ -165,3 +166,19 @@ class TestCommands(unittest.TestCase):
         self.assertEqual(loaded_msg.message_type, ndr.IngestMessageTypes.SYSLOG_UPLOAD)
         syslog = ndr.SyslogUploadMessage().from_message(loaded_msg)
 
+    def test_uploading_status(self):
+        '''Tests uploading status messages'''
+        status_uploader_cli = ["status_uploader", "-c", self._ndr_config_file]
+        with unittest.mock.patch.object(sys, 'argv', status_uploader_cli):
+            ndr.tools.status.main()
+
+        # Make sure there's only one file in the queue
+        outbound_queue = os.listdir(self._ncc.outgoing_upload_spool)
+        self.assertEqual(len(outbound_queue), 1)
+        this_msg = self._ncc.outgoing_upload_spool + "/" + outbound_queue[0]
+
+        loaded_msg = ndr.IngestMessage.verify_and_load_message(
+            self._ncc, this_msg, only_accept_cn="ndr_test_suite")
+        os.remove(this_msg)
+
+        self.assertEqual(loaded_msg.message_type, ndr.IngestMessageTypes.STATUS)
