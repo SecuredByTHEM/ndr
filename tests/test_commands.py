@@ -20,28 +20,37 @@
 '''Tests running command binaries from NDR'''
 
 import unittest
+import unittest.mock
+
 import os
 import tempfile
 import subprocess
 import logging
 import shutil
+import sys
+
+import yaml
 
 import ndr
+import ndr.tools.syslog_uploader
 
 THIS_DIR = os.path.dirname(os.path.abspath(__file__))
 NDR_CONFIG_FILE = THIS_DIR + '/data/test_config.yml'
+TEST_SYSLOG_DATA = THIS_DIR + '/data/test_log.json'
+
+def create_temp_file(self):
+    '''Creates scratch files as we need them'''
+    file_descriptor, filename = tempfile.mkstemp()
+    os.close(file_descriptor) # Don't need to write anything to it
+
+    self._created_files.append(filename)
+    return filename
 
 def config_ndr_for_signing_and_local_queue(self):
-    def create_temp_file():
-        '''Creates scratch files as we need them'''
-        file_descriptor, filename = tempfile.mkstemp()
-        os.close(file_descriptor) # Don't need to write anything to it
-
-        return filename
-
-    root_certificate = create_temp_file()
-    csr = create_temp_file()
-    private_key = create_temp_file()
+    '''Configs NDR for loopback testing'''
+    root_certificate = create_temp_file(self)
+    csr = create_temp_file(self)
+    private_key = create_temp_file(self)
 
     # First create the client private key
     openssl_cmd = ["openssl", "genrsa", "-out", private_key]
@@ -102,11 +111,18 @@ class TestCommands(unittest.TestCase):
         self._ncc = ndr.Config(NDR_CONFIG_FILE)
         self._ncc.logger = logging.getLogger()
 
+        self._created_files = []
         config_ndr_for_signing_and_local_queue(self)
 
-    def tearDown(self):
-        cleanup_after_ndr(self)
+        # Write out the test config
+        self._ndr_config_file = create_temp_file(self)
+        with open(self._ndr_config_file, 'w') as f:
+            yaml_content = yaml.dump(self._ncc.to_dict())
+            f.write(yaml_content)
 
+    def tearDown(self):
+        for filename in self._created_files:
+            os.remove(filename)
 
     def test_writing_queue_message(self):
         '''Tests writing out a queue message and getting it back'''
@@ -130,3 +146,22 @@ class TestCommands(unittest.TestCase):
         # Yay for refactoring nightmares :/
         os.remove(this_msg)
         self.assertEqual(loaded_msg.message_type, ingest_message.message_type)
+
+    def test_uploading_syslog(self):
+        '''Tests syslog upload command'''
+        syslog_uploader_cli = ["syslog_uploader", "-c", self._ndr_config_file, TEST_SYSLOG_DATA]
+        with unittest.mock.patch.object(sys, 'argv', syslog_uploader_cli):
+            ndr.tools.syslog_uploader.main()
+
+        # Make sure there's only one file in the queue
+        outbound_queue = os.listdir(self._ncc.outgoing_upload_spool)
+        self.assertEqual(len(outbound_queue), 1)
+        this_msg = self._ncc.outgoing_upload_spool + "/" + outbound_queue[0]
+
+        loaded_msg = ndr.IngestMessage.verify_and_load_message(
+            self._ncc, this_msg, only_accept_cn="ndr_test_suite")
+        os.remove(this_msg)
+
+        self.assertEqual(loaded_msg.message_type, ndr.IngestMessageTypes.SYSLOG_UPLOAD)
+        syslog = ndr.SyslogUploadMessage().from_message(loaded_msg)
+

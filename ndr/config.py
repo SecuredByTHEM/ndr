@@ -71,9 +71,6 @@ class Config:
         self.ssl_csr = config_dict['ssl']['csr']
         self.ssl_cafile = config_dict['ssl']['cafile']
 
-        self.nmap_scan_interface = config_dict['nmap']['scan_interface']
-
-        self.upload_spool = None
         self.upload_method = config_dict['upload_method']
 
         #self.enlistment_timestamp_file = config_dict['enlistment_timestamp']
@@ -91,16 +88,35 @@ class Config:
 
         self.ndr_netconfig_file = config_dict.get('netcfg_file', '/persistant/etc/ndr/network_config.yml')
 
-        # Required for keeping SNORT traffic logs sane
-        if 'snort' not in config_dict:
-            config_dict['snort'] = {}
-        self.snort_monitor_port = config_dict['snort'].get('monitor_port', 'monitor0')
-
         if 'nmap' not in config_dict:
             config_dict['nmap'] = {}
         self.nmap_configuration_file = config_dict['nmap'].get('config', '/persistant/etc/ndr/nmap_config.yml')
 
         self.image_information_file = "/etc/ndr/image_info.yml"
+
+    def to_dict(self):
+        '''Outputs the config struct in dictionary form so it can be serialized. Used by the test suite'''
+        config_dict = {}
+        config_dict['hostname'] = self.hostname
+        config_dict['ssl'] = {}
+        config_dict['ssl']['keyfile'] = self.ssl_private_key
+        config_dict['ssl']['bundle'] = self.ssl_bundle
+        config_dict['ssl']['certfile'] = self.ssl_certfile
+        config_dict['ssl']['csr'] = self.ssl_csr
+        config_dict['ssl']['cafile'] = self.ssl_cafile
+        config_dict['upload_method'] = self.upload_method
+        config_dict['upload'] = {}
+        if self.upload_method == "local":
+            config_dict['upload']['incoming_directory'] = self.outgoing_upload_spool
+            config_dict['upload']['enrollment_directory'] = self.outgoing_enrollment_spool
+        elif self.upload_method == "uucp":
+            config_dict['upload']['ingest_uucp_host'] = self.ingest_uucp_host
+            config_dict['upload']['ingest_uucp_dir'] = self.ingest_uucp_dir
+            config_dict['upload']['enrollment_uucp_dir'] = self.enrollment_uucp_dir
+        config_dict['nmap'] = {}
+        config_dict['nmap']['config'] = self.nmap_configuration_file
+
+        return config_dict
 
     def get_image_version(self):
         '''Tries to load the image revision file'''

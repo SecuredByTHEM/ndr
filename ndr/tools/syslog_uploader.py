@@ -26,11 +26,14 @@ def main():
     # Get our list of log files
     parser = argparse.ArgumentParser(
         description="Upload a JSON-formatted syslog file for processing")
+    parser.add_argument('-c', '--config',
+                        default='/etc/ndr/config.yml',
+                        help='NDR Configuration File')
     parser.add_argument('logs', nargs='+',
                         help='log files to upload')
     args = parser.parse_args()
 
-    ndr_config = ndr.Config('/etc/ndr/config.yml')
+    ndr_config = ndr.Config(args.config)
     logger = ndr_config.logger
 
     # This is slagging ugly. Nothing stops us from getting
