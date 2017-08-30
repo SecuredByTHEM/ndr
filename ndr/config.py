@@ -92,7 +92,9 @@ class Config:
             config_dict['nmap'] = {}
         self.nmap_configuration_file = config_dict['nmap'].get('config', '/persistant/etc/ndr/nmap_config.yml')
 
-        self.image_information_file = "/etc/ndr/image_info.yml"
+        misc_dict = config_dict.get('misc', dict())
+
+        self.image_information_file = misc_dict.get('image_info', "/etc/ndr/image_info.yml")
 
     def to_dict(self):
         '''Outputs the config struct in dictionary form so it can be serialized. Used by the test suite'''
@@ -115,6 +117,9 @@ class Config:
             config_dict['upload']['enrollment_uucp_dir'] = self.enrollment_uucp_dir
         config_dict['nmap'] = {}
         config_dict['nmap']['config'] = self.nmap_configuration_file
+
+        config_dict['misc'] = {}
+        config_dict['misc']['image_info'] = self.image_information_file
 
         return config_dict
 
