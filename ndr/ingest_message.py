@@ -311,7 +311,7 @@ class IngestMessage:
 
             # Read it in
             decoded_message = ossl_verify_proc.stdout
-            message = IngestMessage()
+            message = IngestMessage(config)
             message.load_from_yaml(decoded_message)
 
             return message
@@ -332,6 +332,7 @@ class IngestMessageTypes(Enum):
     NMAP_SCAN = "nmap_scan"
     TEST_ALERT = "test_alert"
     REBOOT_REQUEST = "reboot_request"
+    FILE_UPDATE = "file_update"
 
 
 class IngestMessageDestinations(Enum):

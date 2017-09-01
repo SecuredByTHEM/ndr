@@ -32,9 +32,13 @@ def main():
     parser.add_argument('-k', "--keep", help='base name of the log file to upload', action='store_true')
     parser.add_argument('messages', nargs='+',
                         help='remote messages to process')
+    parser.add_argument('-c', '--config',
+                        default='/etc/ndr/config.yml',
+                        help='NDR Configuration File')
+
     args = parser.parse_args()
 
-    ndr_config = ndr.Config('/etc/ndr/config.yml')
+    ndr_config = ndr.Config(args.config)
     logger = ndr_config.logger
 
     validated_messages = []
@@ -101,6 +105,11 @@ def main():
                     logger.error("shutdown failed: %s", str(shutdown_process.stderr, 'utf-8'))
                     return
 
+            elif message.message_type == ndr.IngestMessageTypes.FILE_UPDATE:
+                logger.info("Got a file update message")
+                file_update_message = ndr.FileUpdateMessage(ndr_config)
+                file_update_message.from_message(message)
+                file_update_message.write_updates()
             else:
                 logger.error("Got non-client accepted %s message", message.message_type.value)
         else:

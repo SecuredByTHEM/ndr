@@ -37,7 +37,7 @@ class CertificateRequest(ndr.IngestMessage):
             self, config, ndr.IngestMessageTypes.CERTIFICATE_REQUEST)
 
     def from_message(self, ingest_msg: ndr.IngestMessage):
-        '''Converts an ingest message to a SnortTraffic record'''
+        '''Converts an ingest message to a Certificate Request record'''
         super().from_message(ingest_msg)
         self.csr = self.headers['csr']
         self.certificate = self.headers['certificate']
