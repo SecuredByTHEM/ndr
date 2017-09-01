@@ -49,29 +49,31 @@ class NmapConfig(object):
         interfaces = netcfg.get_all_managed_interfaces()
 
         # Loop through the interfaces we'll scan on
-        for interface in interfaces:
-            if 'lan' not in interface.name:
-                continue # Interface we don't care about
+        if netcfg_file is not None:
+            for interface in interfaces:
+                if 'lan' not in interface.name:
+                    continue # Interface we don't care about
 
-            # Add this interface to networks we care about
-            self.scan_interfaces.append(interface.name)
+                # Add this interface to networks we care about
+                self.scan_interfaces.append(interface.name)
 
-            # Append the networks we're configured for to the list
-            for addr in interface.current_ip_addresses:
-                self.networks_to_scan.append(
-                    addr.ip_network()
-                )
+                # Append the networks we're configured for to the list
+                for addr in interface.current_ip_addresses:
+                    self.networks_to_scan.append(
+                        addr.ip_network()
+                    )
 
         # This config file is optional so it's non-fatal if we don't find it
-        try:
-            with open(nmap_cfgfile, 'r') as f:
-                config_dict = f.read()
-                cfg_dict = yaml.safe_load(config_dict)
-                if cfg_dict is not None: # What happens when pyYAML reads an empty file
-                    self.from_dict(cfg_dict)
+        if nmap_cfgfile is not None:
+            try:
+                with open(nmap_cfgfile, 'r') as f:
+                    config_dict = f.read()
+                    cfg_dict = yaml.safe_load(config_dict)
+                    if cfg_dict is not None: # What happens when pyYAML reads an empty file
+                        self.from_dict(cfg_dict)
 
-        except FileNotFoundError:
-            self.nmap_cfgfile = None
+            except FileNotFoundError:
+                self.nmap_cfgfile = None
 
     def to_dict(self):
         '''Persistant storage of blacklists - may expand in the future'''
@@ -128,12 +130,14 @@ class NmapConfig(object):
                 self.blacklist_ips.append(ipaddress.ip_address(ip_addr))
 
         # Now do it again with the MAC addresses
+
+        # Normalize mac addresses to be all upper case when they go in
         for mac_addr, value in machine_macs.items():
             enum_value = NmapMachineMode(value)
             if enum_value == NmapMachineMode.BASIC_ONLY:
-                self.basic_only_macs.append(mac_addr)
+                self.basic_only_macs.append(mac_addr.upper())
             elif enum_value == NmapMachineMode.BLACKLIST:
-                self.blacklist_macs.append(mac_addr)
+                self.blacklist_macs.append(mac_addr.upper())
 
     def write_configuration(self):
         '''Writes out the persistant configuration file'''

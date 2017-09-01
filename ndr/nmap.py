@@ -207,7 +207,7 @@ class NmapHost(object):
         self.reason = NmapReasons(reason)
         self.reason_ttl = int(reason_ttl)
         self.addr = ipaddress.ip_address(addr)
-        self.mac_address = None
+        self._mac_address = None
         self.vendor = None
         self.hostnames = []
         self.ports = []
@@ -246,6 +246,16 @@ class NmapHost(object):
         pprint_string += "Detection Method: " + self.reason.value + "\n"
         return pprint_string
 
+    @property
+    def mac_address(self):
+        '''Always return the mac address as an upper case string for consistancy'''
+
+        if self._mac_address is not None:
+            return self._mac_address.upper()
+
+    @mac_address.setter
+    def mac_address(self, mac_address):
+        self._mac_address = mac_address
 
     @classmethod
     def from_xml(cls, xml):
