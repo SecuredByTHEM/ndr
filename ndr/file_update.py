@@ -113,6 +113,12 @@ class FileUpdateMessage(ndr.IngestMessage):
         self.add_header('payload', self.to_dict())
         super().create_report()
 
+    def from_message(self, ingest_msg: ndr.IngestMessage):
+        '''Converts an ingest message to a Certificate Request record'''
+        super().from_message(ingest_msg)
+        self.from_dict(self.headers['payload'])
+        return self
+
     def add_file(self, file_type: ndr.NdrConfigurationFiles, binary_data: bytes):
         '''Adds a file for inclusion to the update message.abs
 

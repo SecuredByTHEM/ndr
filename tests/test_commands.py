@@ -29,11 +29,13 @@ import ndr
 import ndr.tools.syslog_uploader
 import ndr.tools.status
 import ndr.tools.alert_tester
+import ndr.tools.process_message
 
 import tests.util
 
 THIS_DIR = os.path.dirname(os.path.abspath(__file__))
 TEST_SYSLOG_DATA = THIS_DIR + '/data/test_log.json'
+NMAP_CONFIG = THIS_DIR + "/data/nmap_config.yml"
 
 class TestCommands(unittest.TestCase):
     '''Tests commands main functions'''
@@ -122,3 +124,34 @@ class TestCommands(unittest.TestCase):
         os.remove(this_msg)
 
         self.assertEqual(loaded_msg.message_type, ndr.IngestMessageTypes.TEST_ALERT)
+
+    def test_process_message_file_update(self):
+        '''Tests updating files via the file manager'''
+
+        # Write out a file update message
+        with open(NMAP_CONFIG, 'rb') as f:
+            binary_data = f.read()
+
+        # Write a file update message and drop it into the queue
+        file_update_message = ndr.FileUpdateMessage(self._ncc)
+        file_update_message.add_file(ndr.NdrConfigurationFiles.NMAP_CONFIG, binary_data)
+        file_update_message.sign_report()
+        file_update_message.load_into_queue()
+
+        # Find the output message for chucking it into process-message
+        outbound_queue = os.listdir(self._ncc.outgoing_upload_spool)
+        self.assertEqual(len(outbound_queue), 1)
+        this_msg = self._ncc.outgoing_upload_spool + "/" + outbound_queue[0]
+
+        # Process da message
+        process_msg_cli = ["ndr-process-message", "-c", self._ndr_config_file, this_msg]
+        with unittest.mock.patch.object(sys, 'argv', process_msg_cli):
+            with unittest.mock.patch('os.getuid') as uid:
+                uid.return_value = 0
+                ndr.tools.process_message.main()
+
+        # Confirm the file actually got written out
+        with open(self._ncc.nmap_configuration_file, 'rb') as f:
+            written_file = f.read()
+
+        self.assertEqual(binary_data, written_file)
