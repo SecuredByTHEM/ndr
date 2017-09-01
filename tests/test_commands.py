@@ -23,110 +23,30 @@ import unittest
 import unittest.mock
 
 import os
-import tempfile
-import subprocess
-import logging
-import shutil
 import sys
-
-import yaml
 
 import ndr
 import ndr.tools.syslog_uploader
 import ndr.tools.status
 import ndr.tools.alert_tester
 
+import tests.util
+
 THIS_DIR = os.path.dirname(os.path.abspath(__file__))
-NDR_CONFIG_FILE = THIS_DIR + '/data/test_config.yml'
 TEST_SYSLOG_DATA = THIS_DIR + '/data/test_log.json'
-IMAGE_CONFIG = THIS_DIR + '/data/image_info.yml'
-
-def create_temp_file(self):
-    '''Creates scratch files as we need them'''
-    file_descriptor, filename = tempfile.mkstemp()
-    os.close(file_descriptor) # Don't need to write anything to it
-
-    self._created_files.append(filename)
-    return filename
-
-def config_ndr_for_signing_and_local_queue(self):
-    '''Configs NDR for loopback testing'''
-    root_certificate = create_temp_file(self)
-    csr = create_temp_file(self)
-    private_key = create_temp_file(self)
-
-    # First create the client private key
-    openssl_cmd = ["openssl", "genrsa", "-out", private_key]
-    openssl_proc = subprocess.run(
-        args=openssl_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=False)
-
-    if openssl_proc.returncode != 0:
-        raise ValueError(str(openssl_proc.stderr, 'utf-8'))
-
-    # Generate a root CSR
-    openssl_cmd = ["openssl", "req", "-new", "-key", private_key, "-out", csr,
-                   "-subj", "/C=US/ST=New York/L=New York/O=SbT/OU=testing/CN=ndr_test_suite"]
-
-    openssl_proc = subprocess.run(
-        args=openssl_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=False)
-
-    if openssl_proc.returncode != 0:
-        raise ValueError(str(openssl_proc.stderr, 'utf-8'))
-
-    # Sign the root
-    openssl_cmd = ["openssl", "x509", "-req", "-days", "365", "-in", csr,
-                   "-signkey", private_key, "-out", root_certificate]
-    openssl_proc = subprocess.run(
-        args=openssl_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=False)
-
-    if openssl_proc.returncode != 0:
-        raise ValueError(str(openssl_proc.stderr, 'utf-8'))
-
-    # Override the variables controlling NSC's certificates
-    self._ncc.ssl_certfile = root_certificate
-
-    # Bundle should technically be optional ...
-    self._ncc.ssl_bundle = root_certificate
-    self._ncc.ssl_cafile = root_certificate
-    self._ncc.ssl_private_key = private_key
-    self._ncc.ssl_csr = csr
-
-    # Switch the UUCP configuration to local
-
-    # Create some temporary directories
-    upload_spool = tempfile.mkdtemp()
-    enrollment_spool = tempfile.mkdtemp()
-
-    self._ncc.upload_method = "local"
-    self._ncc.outgoing_upload_spool = upload_spool
-    self._ncc.enrollment_spool = enrollment_spool
-
-def cleanup_after_ndr(self):
-    os.remove(self._ncc.ssl_bundle)
-    os.remove(self._ncc.ssl_private_key)
-    os.remove(self._ncc.ssl_csr)
-    shutil.rmtree(self._ncc.outgoing_upload_spool)
-    shutil.rmtree(self._ncc.enrollment_spool)
 
 class TestCommands(unittest.TestCase):
+    '''Tests commands main functions'''
     def setUp(self):
-        logging.getLogger().addHandler(logging.NullHandler())
-        self._ncc = ndr.Config(NDR_CONFIG_FILE)
-        self._ncc.logger = logging.getLogger()
-        self._ncc.image_information_file = IMAGE_CONFIG
-
+        # To make pylint shutup
+        self._ncc = None
+        self._ndr_config_file = None
         self._created_files = []
-        config_ndr_for_signing_and_local_queue(self)
 
-        # Write out the test config
-        self._ndr_config_file = create_temp_file(self)
-        with open(self._ndr_config_file, 'w') as f:
-            yaml_content = yaml.dump(self._ncc.to_dict())
-            f.write(yaml_content)
+        tests.util.setup_ndr_client_config(self)
 
     def tearDown(self):
-        for filename in self._created_files:
-            os.remove(filename)
+        tests.util.cleanup_files(self)
 
     def test_writing_queue_message(self):
         '''Tests writing out a queue message and getting it back'''

@@ -332,6 +332,7 @@ class IngestMessageTypes(Enum):
     NMAP_SCAN = "nmap_scan"
     TEST_ALERT = "test_alert"
     REBOOT_REQUEST = "reboot_request"
+    FILE_UPDATE = "file_update"
 
 
 class IngestMessageDestinations(Enum):
