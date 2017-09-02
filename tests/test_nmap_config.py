@@ -115,10 +115,11 @@ class TestNmapConfig(unittest.TestCase):
     def test_to_dict(self):
         '''Tests serialization to dict'''
         nmap_cfg = ndr.NmapConfig(self._scratch_config)
-        nmap_cfg.basic_only_ips.append(ipaddress.ip_address("192.168.2.123"))
-        nmap_cfg.blacklist_ips.append(ipaddress.ip_address("192.168.10.21"))
-        nmap_cfg.basic_only_macs.append("FF:EE:CC:DD:EE:AA")
-        nmap_cfg.blacklist_macs.append("AA:BB:CC:DD:EE:FF")
+        nmap_cfg.ip_address_config[ipaddress.ip_address("192.168.2.123")] = ndr.NmapScanMode.BASIC_ONLY
+        nmap_cfg.ip_address_config[ipaddress.ip_address("192.168.10.21")] = ndr.NmapScanMode.BLACKLIST
+
+        nmap_cfg.mac_address_config["FF:EE:CC:DD:EE:AA"] = ndr.NmapScanMode.BASIC_ONLY
+        nmap_cfg.mac_address_config["AA:BB:CC:DD:EE:FF"] = ndr.NmapScanMode.BLACKLIST
 
         cfg_dict = nmap_cfg.to_dict()
         self.assertEqual(cfg_dict['version'], 1)
@@ -132,10 +133,14 @@ class TestNmapConfig(unittest.TestCase):
         nmap_cfg = ndr.NmapConfig(netcfg_file=self._scratch_config,
                                   nmap_cfgfile=NMAP_CONFIG)
 
-        self.assertIn(ipaddress.ip_address("192.168.2.123"), nmap_cfg.basic_only_ips)
-        self.assertIn(ipaddress.ip_address("192.168.10.21"), nmap_cfg.blacklist_ips)
-        self.assertIn("FF:EE:CC:DD:EE:AA", nmap_cfg.basic_only_macs)
-        self.assertIn("AA:BB:CC:DD:EE:FF", nmap_cfg.blacklist_macs)
+        self.assertEqual(nmap_cfg.ip_address_config[ipaddress.ip_address("192.168.2.123")],
+                         ndr.NmapScanMode.BASIC_ONLY)
+        self.assertEqual(nmap_cfg.ip_address_config[ipaddress.ip_address("192.168.10.21")],
+                         ndr.NmapScanMode.BLACKLIST)
+        self.assertEqual(nmap_cfg.mac_address_config["FF:EE:CC:DD:EE:AA"],
+                         ndr.NmapScanMode.BASIC_ONLY)
+        self.assertEqual(nmap_cfg.mac_address_config["AA:BB:CC:DD:EE:FF"],
+                         ndr.NmapScanMode.BLACKLIST)
 
     def test_write_to_file(self):
         '''Tests writing out the NMAP configuration to file'''
@@ -145,10 +150,11 @@ class TestNmapConfig(unittest.TestCase):
         nmap_cfg = ndr.NmapConfig(netcfg_file=self._scratch_config,
                                   nmap_cfgfile=out_file)
 
-        nmap_cfg.basic_only_ips.append(ipaddress.ip_address("192.168.2.123"))
-        nmap_cfg.blacklist_ips.append(ipaddress.ip_address("192.168.10.21"))
-        nmap_cfg.basic_only_macs.append("FF:EE:CC:DD:EE:AA")
-        nmap_cfg.blacklist_macs.append("AA:BB:CC:DD:EE:FF")
+        nmap_cfg.ip_address_config[ipaddress.ip_address("192.168.2.123")] = ndr.NmapScanMode.BASIC_ONLY
+        nmap_cfg.ip_address_config[ipaddress.ip_address("192.168.10.21")] = ndr.NmapScanMode.BLACKLIST
+
+        nmap_cfg.mac_address_config["FF:EE:CC:DD:EE:AA"] = ndr.NmapScanMode.BASIC_ONLY
+        nmap_cfg.mac_address_config["AA:BB:CC:DD:EE:FF"] = ndr.NmapScanMode.BLACKLIST
         nmap_cfg.write_configuration()
 
         # Read the config file back in as a YAML file

@@ -39,10 +39,8 @@ class NmapConfig(object):
         self.nmap_cfgfile = nmap_cfgfile
 
         # Handle our blacklists here.
-        self.basic_only_ips = []
-        self.basic_only_macs = []
-        self.blacklist_ips = []
-        self.blacklist_macs = []
+        self.mac_address_config = {}
+        self.ip_address_config = {}
 
         # Pull our interfaces from the NDR network configuration
         netcfg = ndr_netcfg.NetworkConfiguration(netcfg_file)
@@ -78,8 +76,6 @@ class NmapConfig(object):
     def to_dict(self):
         '''Persistant storage of blacklists - may expand in the future'''
         config_dict = {}
-
-        # Basic Only means we port scan but don't run with -A
         config_dict['version'] = 1
 
         # Machines are listed by key/value pairs under the machine_mac dict
@@ -89,17 +85,11 @@ class NmapConfig(object):
         machine_mac = {}
         machine_ip = {}
 
-        for mac_address in self.basic_only_macs:
-            machine_mac[mac_address] = NmapMachineMode.BASIC_ONLY.value
+        for mac_address, setting in self.mac_address_config.items():
+            machine_mac[mac_address] = setting.value
 
-        for mac_address in self.blacklist_macs:
-            machine_mac[mac_address] = NmapMachineMode.BLACKLIST.value
-
-        for ip_addr in self.basic_only_ips:
-            machine_ip[ip_addr.compressed] = NmapMachineMode.BASIC_ONLY.value
-
-        for ip_addr in self.blacklist_ips:
-            machine_ip[ip_addr.compressed] = NmapMachineMode.BLACKLIST.value
+        for ip_addr, setting in self.ip_address_config.items():
+            machine_ip[ip_addr.compressed] = setting.value
 
         config_dict['machine_ips'] = machine_ip
         config_dict['machine_macs'] = machine_mac
@@ -113,31 +103,21 @@ class NmapConfig(object):
             raise ValueError("Unknown NDR NMAP config file version!")
 
         # Clean out the IP lists
-        self.basic_only_ips = []
-        self.blacklist_ips = []
-        self.basic_only_macs = []
-        self.blacklist_macs = []
+        self.mac_address_config = {}
+        self.ip_address_config = {}
 
         machine_ips = config_dict.get('machine_ips', dict())
         machine_macs = config_dict.get('machine_macs', dict())
 
         # Load in the machine IP addresses
         for ip_addr, value in machine_ips.items():
-            enum_value = NmapMachineMode(value)
-            if enum_value == NmapMachineMode.BASIC_ONLY:
-                self.basic_only_ips.append(ipaddress.ip_address(ip_addr))
-            elif enum_value == NmapMachineMode.BLACKLIST:
-                self.blacklist_ips.append(ipaddress.ip_address(ip_addr))
+            self.ip_address_config[ipaddress.ip_address(ip_addr)] = NmapScanMode(value)
 
-        # Now do it again with the MAC addresses
+        # Now do it again with the MAC addresses. When we load in MACs, make them all
+        # upper case to be consistent with NmapHosts
 
-        # Normalize mac addresses to be all upper case when they go in
         for mac_addr, value in machine_macs.items():
-            enum_value = NmapMachineMode(value)
-            if enum_value == NmapMachineMode.BASIC_ONLY:
-                self.basic_only_macs.append(mac_addr.upper())
-            elif enum_value == NmapMachineMode.BLACKLIST:
-                self.blacklist_macs.append(mac_addr.upper())
+            self.mac_address_config[mac_addr.upper()] = NmapScanMode(value)
 
     def write_configuration(self):
         '''Writes out the persistant configuration file'''
@@ -266,6 +246,9 @@ class NmapRunner(object):
             return hosts_in_scan
 
 
+        # Set our default scan mode
+        default_scan_mode = NmapScanMode.FULL_SCAN
+
         # During NMAP scanning, we will run this in multiple stages to determine what, if anything
         # if on the network, and then do additional scans beyond that point based on the data we
         # detect and determine. By default, we only scan the L2 segment we're on.
@@ -328,33 +311,23 @@ class NmapRunner(object):
             mac_address = host_tuple[0][1]
             interface = host_tuple[1]
 
+            scan_mode = default_scan_mode
+            if ipaddress.ip_address(host_ip) in self.nmap_config.ip_address_config:
+                scan_mode = self.nmap_config.ip_address_config[ipaddress.ip_address(host_ip)]
+            elif mac_address in self.nmap_config.mac_address_config:
+                scan_mode = self.nmap_config.mac_address_config[mac_address]
 
             # FIXME: We should use protocol discovery here and refine our scans based on it, but
             # at the moment, that requires a fair bit of additional code to be written, so we'll
             # address it later
 
-            # Determine if we need to skip stuff due to a blacklist
-            if ipaddress.ip_address(host_ip) in self.nmap_config.blacklist_ips:
-                logger.info("Skipping IP %s due to blacklist", host_ip)
+            if scan_mode is NmapScanMode.BLACKLIST:
+                logger.info("Skipping %s, %s due to blacklist due to config", host_ip, mac_address)
                 continue
-
-            if mac_address in self.nmap_config.blacklist_macs:
-                logger.info("Skipping IP %s due to MAC %s blacklist", host_ip, mac_address)
-                continue
-
-            basic_scan = False
-
-            if ipaddress.ip_address(host_ip) in self.nmap_config.basic_only_ips:
-                logger.info("Degrading %s to basic scan due to NMAP config", host_ip)
-                basic_scan = True
-
-            if mac_address in self.nmap_config.basic_only_macs:
-                logger.info("Degrading %s to basic scan due to NMAP config", host_ip)
-                basic_scan = True
 
             # For now, we'll simply do a protocol scan so we can get an idea of what exists
             # out there in the wild
-            
+
             # MC - disabling protocol scan for now due to performance
             #logger.debug("Running protocol scan on %s", host_ip)
             #protocol_scan = self.protocol_scan(host_ip, interface)
@@ -365,7 +338,8 @@ class NmapRunner(object):
 
             logger.info("Phase 4: Host Scanning")
 
-            if basic_scan is True:
+            if scan_mode is NmapScanMode.BASIC_ONLY:
+                logger.info("Degrading %s to basic scan due to NMAP config", host_ip)
                 logger.info("Basic scanning %s", host_ip)
                 host_scan = self.basic_host_scan(host_ip, interface)
             else:
@@ -383,7 +357,8 @@ class NmapScanTypes(Enum):
     SERVICE_DISCOVERY = "service-discovery"
     ND_DISCOVERY = "nd-discovery"
 
-class NmapMachineMode(Enum):
-    '''Machine configurations recognized by NMAP Runner'''
+class NmapScanMode(Enum):
+    '''Scan configurations recognized by NMAP Runner'''
+    FULL_SCAN = "full-scan"
     BASIC_ONLY = "basic-only"
     BLACKLIST = "blacklist"
