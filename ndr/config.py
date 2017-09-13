@@ -95,6 +95,7 @@ class Config:
         misc_dict = config_dict.get('misc', dict())
 
         self.image_information_file = misc_dict.get('image_info', "/etc/ndr/image_info.yml")
+        self.tshark_ndr_binary = misc_dict.get('tshark_ndr', "/opt/tshark-ndr/bin/tshark")
 
     def to_dict(self):
         '''Outputs the config struct in dictionary form so it can be serialized. Used by the test suite'''
@@ -120,7 +121,7 @@ class Config:
 
         config_dict['misc'] = {}
         config_dict['misc']['image_info'] = self.image_information_file
-
+        config_dict['misc']['tshark_ndr_binary'] = self.tshark_ndr_binary
         return config_dict
 
     def get_image_version(self):
