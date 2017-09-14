@@ -25,10 +25,7 @@ import sys
 import subprocess
 import io
 
-import tests.util
-
 import ndr
-import ndr_netcfg
 
 class TrafficReportMessage(ndr.IngestMessage):
     '''Represents a single log upload message of snort IP traffic'''

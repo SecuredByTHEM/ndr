@@ -30,12 +30,14 @@ import ndr.tools.syslog_uploader
 import ndr.tools.status
 import ndr.tools.alert_tester
 import ndr.tools.process_message
+import ndr.tools.pcap_to_traffic_report
 
 import tests.util
 
 THIS_DIR = os.path.dirname(os.path.abspath(__file__))
 TEST_SYSLOG_DATA = THIS_DIR + '/data/test_log.json'
 NMAP_CONFIG = THIS_DIR + "/data/nmap_config.yml"
+TSHARK_PCAP = THIS_DIR + "/data/tshark_trm_test.pcap"
 
 class TestCommands(unittest.TestCase):
     '''Tests commands main functions'''
@@ -155,3 +157,20 @@ class TestCommands(unittest.TestCase):
             written_file = f.read()
 
         self.assertEqual(binary_data, written_file)
+
+    def test_pcap_processing(self):
+        '''Tests uploading and processing a pcap message'''
+        alert_tester_cli = ["pcap_processor", "-c", self._ndr_config_file, TSHARK_PCAP]
+        with unittest.mock.patch.object(sys, 'argv', alert_tester_cli):
+            ndr.tools.pcap_to_traffic_report.main()
+
+        # Make sure there's only one file in the queue
+        outbound_queue = os.listdir(self._ncc.outgoing_upload_spool)
+        self.assertEqual(len(outbound_queue), 1)
+        this_msg = self._ncc.outgoing_upload_spool + "/" + outbound_queue[0]
+
+        loaded_msg = ndr.IngestMessage.verify_and_load_message(
+            self._ncc, this_msg, only_accept_cn="ndr_test_suite")
+        os.remove(this_msg)
+
+        self.assertEqual(loaded_msg.message_type, ndr.IngestMessageTypes.TRAFFIC_REPORT)
