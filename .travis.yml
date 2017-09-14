@@ -1,5 +1,5 @@
 dist: trusty
-sudo: false
+sudo: true
 
 language: python
 
@@ -7,6 +7,9 @@ python:
   - 3.5
 
 install:
+  - sudo apt-get -y build-dep wireshark
+  - git clone https://github.com/SecuredByTHEM/wireshark.git -b ndr_tshark
+  - cd wireshark && ./autogen.sh && ./configure --prefix=/opt/tshark-ndr/ && make && make install && cd ..
   - pip install codecov
   - pip install coverage
   - pip install git+https://github.com/SecuredByTHEM/ndr-netcfg.git

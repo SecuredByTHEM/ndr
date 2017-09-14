@@ -40,7 +40,8 @@ setup(
             'ndr-snort-traffic-uploader = ndr.tools.snort_traffic_uploader:main',
             'ndr-process-message = ndr.tools.process_message:main',
             'ndr-syslog-alertd = ndr.tools.syslog_alert:main',
-            'ndr-status-uploader = ndr.tools.status:main'
+            'ndr-status-uploader = ndr.tools.status:main',
+            'ndr-pcap-processor = ndr.tools.pcap_to_traffic_report:main'
         ]
     },
     test_suite="tests"

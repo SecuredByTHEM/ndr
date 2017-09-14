@@ -328,11 +328,12 @@ class IngestMessageTypes(Enum):
     STATUS = "status"
     CERTIFICATE_REQUEST = "cert_request"
     SYSLOG_UPLOAD = "syslog_upload"
-    SNORT_TRAFFIC = "snort_traffic"
+    SNORT_TRAFFIC = "snort_traffic" # old-style SNORT traffic messages
     NMAP_SCAN = "nmap_scan"
     TEST_ALERT = "test_alert"
     REBOOT_REQUEST = "reboot_request"
     FILE_UPDATE = "file_update"
+    TRAFFIC_REPORT = "traffic_report"
 
 
 class IngestMessageDestinations(Enum):
