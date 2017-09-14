@@ -27,6 +27,7 @@ def main():
     parser.add_argument('-c', '--config',
                         default='/etc/ndr/config.yml',
                         help='NDR Configuration File')
+    parser.add_argument('-k', '--keep', help='keep pcap file', action='store_true')
     parser.add_argument('pcaps', nargs='+',
                         help='Packet Capture Files')
     args = parser.parse_args()
@@ -44,7 +45,8 @@ def main():
         trm.load_into_queue()
 
         # Because TCPDump doesn't clean up after itself after processing
-        os.remove(pcap)
+        if args.keep is not True:
+            os.remove(pcap)
 
 if __name__ == "__main__":
 	main()

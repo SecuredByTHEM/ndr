@@ -160,7 +160,7 @@ class TestCommands(unittest.TestCase):
 
     def test_pcap_processing(self):
         '''Tests uploading and processing a pcap message'''
-        alert_tester_cli = ["pcap_processor", "-c", self._ndr_config_file, TSHARK_PCAP]
+        alert_tester_cli = ["pcap_processor", "-k", "-c", self._ndr_config_file, TSHARK_PCAP]
         with unittest.mock.patch.object(sys, 'argv', alert_tester_cli):
             ndr.tools.pcap_to_traffic_report.main()
 
