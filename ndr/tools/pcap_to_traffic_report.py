@@ -15,9 +15,8 @@
 # along with NDR.  If not, see <http://www.gnu.org/licenses/>.
 # pylint: disable=C0103
 
-import sys
 import argparse
-import yaml
+import os
 
 import ndr
 
@@ -43,6 +42,9 @@ def main():
         logger.debug("Processed %d entries", len(trm.traffic_entries))
         trm.sign_report()
         trm.load_into_queue()
+
+        # Because TCPDump doesn't clean up after itself after processing
+        os.remove(pcap)
 
 if __name__ == "__main__":
 	main()
