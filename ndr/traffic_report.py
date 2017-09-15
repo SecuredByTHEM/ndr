@@ -31,6 +31,7 @@ class TrafficReportMessage(ndr.IngestMessage):
     '''Represents a single log upload message of snort IP traffic'''
     def __init__(self, config=None):
         self.traffic_entries = []
+        self.filtered_entries = 0
 
         ndr.IngestMessage.__init__(
             self, config, ndr.IngestMessageTypes.TRAFFIC_REPORT)
@@ -123,6 +124,12 @@ class TrafficReportMessage(ndr.IngestMessage):
                     row['start_timestamp'] = dt_obj.timestamp()
 
                     traffic_entry.from_dict(row)
+
+                    # When parsing CSV traffic, exclude local LAN traffic
+                    if traffic_entry.is_local_lan is True:
+                        self.filtered_entries += 1
+                        continue
+
                     self.traffic_entries.append(traffic_entry)
                 except ValueError:
                     self.config.logger.error("failed to parse %s in: %s",
@@ -149,6 +156,20 @@ class TsharkCsvEntry(object):
         self.tx_bytes = None
         self.start_timestamp = None
         self.duration = None
+        self.is_local_lan = False
+
+    @staticmethod
+    def is_address_local_lan(ip_addr):
+        '''Determines if an address is local lan or not'''
+
+        # Multicast traffic is considered local LAN despite technically being routable
+        # as internet routable MC is not actually possible
+
+        if ip_addr.is_global is False or \
+           ip_addr.is_multicast is True:
+            return True
+
+        return False
 
     def from_dict(self, msg_dict):
         '''Does some pre-processing for the CSV for import'''
@@ -174,6 +195,10 @@ class TsharkCsvEntry(object):
         if msg_dict['dst_hostname'] is '':
             self.dst_hostname = None
 
+        # Determine if this is local LAN traffic only
+        if self.is_address_local_lan(self.dst_address) is True and \
+            self.is_address_local_lan(self.src_address) is True:
+            self.is_local_lan = True
         return self
 
     def to_dict(self):

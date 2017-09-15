@@ -41,6 +41,8 @@ def main():
         trm.parse_pcap_file(pcap)
 
         logger.debug("Processed %d entries", len(trm.traffic_entries))
+        logger.debug("Skipped %d local LAN entries", trm.filtered_entries)
+
         trm.sign_report()
         trm.load_into_queue()
 

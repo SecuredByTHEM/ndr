@@ -61,7 +61,7 @@ class TrafficReportTest(unittest.TestCase):
         with open(TSHARK_REPORT, 'r') as f:
             trm = ndr.TrafficReportMessage()
             trm.parse_csv_file(f)
-            self.assertEqual(len(trm.traffic_entries), 25)
+            self.assertEqual(len(trm.traffic_entries), 19)
 
         # With the way Traffic Report is coded, entries go in back to from; the last
         # entry in the CSV file will become the first entry out due to LIFO
@@ -79,7 +79,8 @@ class TrafficReportTest(unittest.TestCase):
         trm2 = ndr.TrafficReportMessage()
         trm2.from_dict(trm_dict)
 
-        self.assertEqual(len(trm2.traffic_entries), 25)
+        # 6 entries are excluded due to local traffic
+        self.assertEqual(len(trm2.traffic_entries), 19)
 
         # With the way Traffic Report is coded, entries go in back to from; the last
         # entry in the CSV file will become the first entry out due to LIFO
@@ -91,7 +92,9 @@ class TrafficReportTest(unittest.TestCase):
         '''Tests parsing a pcap entry'''
         trm = ndr.TrafficReportMessage(self._ncc)
         trm.parse_pcap_file(TSHARK_PCAP)
-        self.assertEqual(len(trm.traffic_entries), 25)
+
+        # 6 entries are excluded due to local traffic
+        self.assertEqual(len(trm.traffic_entries), 19)
 
         last_entry = trm.traffic_entries.pop()
 
