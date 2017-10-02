@@ -42,7 +42,7 @@ from ndr.nmap import (NmapHost,
 from ndr.status import StatusMessage, NdrConfigurationFiles
 from ndr.nmap_runner import NmapRunner, NmapConfig, NmapScanTypes, NmapScanMode
 from ndr.snort_traffic import SnortTrafficLog, SnortTrafficEntry
-from ndr.traffic_report import TrafficReportMessage, TsharkCsvEntry
+from ndr.traffic_report import TrafficReportMessage, TsharkEntry
 from ndr.cert_request import CertificateRequest, CertificateRequestTypes
 from ndr.alert import AlertMessage
 from ndr.file_update import FileObject, FileUpdateMessage

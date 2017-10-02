@@ -67,7 +67,7 @@ class TrafficReportMessage(ndr.IngestMessage):
 
         self.traffic_entries = []
         for entry in traffic_entries:
-            tcsve = TsharkCsvEntry()
+            tcsve = TsharkEntry()
             self.traffic_entries.append(tcsve.from_dict(entry))
 
     def parse_pcap_file(self, pcapfile):
@@ -80,6 +80,7 @@ class TrafficReportMessage(ndr.IngestMessage):
                       '-z', 'conv,tcp',
                       '-z', 'conv,udp',
                       '-z', 'conv,sctp',
+                      '-N', 'dmnt', # Force name resolution on if we can determine it from the pcap
                       '-q', '-r', pcapfile]
 
         tshark_proc = subprocess.run(
@@ -116,7 +117,7 @@ class TrafficReportMessage(ndr.IngestMessage):
                                               'duration'])
             for row in reader:
                 try:
-                    traffic_entry = ndr.TsharkCsvEntry()
+                    traffic_entry = ndr.TsharkEntry()
 
                     # Convert the time field to a timestamp
                     dt_obj = datetime.datetime.strptime(row['start_time'],
@@ -140,7 +141,7 @@ class TrafficReportMessage(ndr.IngestMessage):
         finally:
             pass
 
-class TsharkCsvEntry(object):
+class TsharkEntry(object):
     '''Represents a single log message of TShark information. Not all fields from the CSV
        file are retained as we're not interested in framing data'''
 
