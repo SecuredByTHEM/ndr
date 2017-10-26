@@ -226,7 +226,7 @@ class NmapRunner(object):
         options = self.build_nmap_commandline("-sS -A -T4", address, interface)
         return self.run_scan(NmapScanTypes.SERVICE_DISCOVERY, options, address)
 
-    def run_network_scans(self):
+    def run_network_scans(self, quick=True):
         '''Runs a scan of a network and builds an iterative map of the network'''
 
         def process_and_send_scan(scan, interface=None, append=False):
@@ -293,6 +293,11 @@ class NmapRunner(object):
                 nd_discovery = self.nd_host_discovery_scan(network)
                 discovered_hosts += process_and_send_scan(nd_discovery, append=True)
 
+
+        # If we're doing a quick scan, fast return here
+        if quick is True:
+            logger.info("Quick scan only - skipping machine scanning")
+            return
 
         # Now we need to figure out what protocols each host supports
         logger.info("Phase 3: Machine Scanning")

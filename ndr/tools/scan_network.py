@@ -37,6 +37,10 @@ def main():
     parser.add_argument('--nmap-config',
                         default=ndr_config.nmap_configuration_file,
                         help='NMAP Configuration File')
+    parser.add_argument('--quick',
+                        default=False,
+                        action='store_true',
+                        help='Run quickscan')
 
     # Load in the NDR configuration
     args = parser.parse_args()
@@ -48,7 +52,7 @@ def main():
     nmap_config = ndr.NmapConfig(args.net_config)
     nmap_runner = ndr.NmapRunner(ndr_config, nmap_config)
 
-    nmap_runner.run_network_scans()
+    nmap_runner.run_network_scans(quick=args.quick)
 
 if __name__ == "__main__":
     main()
