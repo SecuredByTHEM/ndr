@@ -34,6 +34,7 @@ THIS_DIR = os.path.dirname(os.path.abspath(__file__))
 NMAP_CONFIG = THIS_DIR + "/data/nmap_config.yml"
 
 @unittest.skipIf(os.getuid() != 0, "must be root")
+@unittest.skipIf(1, "forced disabled")
 class TestNmapConfigRoot(unittest.TestCase):
 
     '''Tests Nmap Configuration by creating a fake interface and confirming scan results'''
