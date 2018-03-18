@@ -61,6 +61,9 @@ class NmapConfig(object):
                         addr.ip_network()
                     )
 
+                # Deduplicate scan list
+                self.networks_to_scan = list(set(self.networks_to_scan))
+
         # This config file is optional so it's non-fatal if we don't find it
         if nmap_cfgfile is not None:
             try:
