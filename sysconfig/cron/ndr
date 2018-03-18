@@ -11,4 +11,4 @@ MAILTO=""
 45 * * * *	root	ndr-scan-network
 15 * * * *	root	ndr-snort-traffic-uploader /persistant/snort/all-traffic
 */5 * * * *	root	ndr-status-uploader
-*/5 * * * * root    ndr-scan-network --quick
+*/5 * * * *	root    ndr-scan-network --quick
